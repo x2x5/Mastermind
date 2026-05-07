@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ScholarCanvas 学术画布</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="bg-layer bg-layer-a" aria-hidden="true"></div>
+    <div class="bg-layer bg-layer-b" aria-hidden="true"></div>
+    <div id="layout1" class="layout1 hidden">
+      <header class="layout1-topbar">
+        <span class="layout1-title" data-i18n="cardManagement">卡片管理</span>
+        <div class="topbar-spacer"></div>
+        <button id="resetUsageBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="clearUsage" data-tooltip="清空次数">
+          <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        </button>
+        <button id="apiConfigBtn1" class="topbar-icon-btn" type="button" data-i18n-tooltip="apiConfig" data-tooltip="API 配置">
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+        </button>
+        <div class="topbar-dropdown-wrap" id="langDropdownWrap1">
+          <button id="uiLangBtn1" class="topbar-icon-btn ui-lang-btn" type="button" data-i18n-tooltip="switchLang" data-tooltip="切换语言">
+            <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+          </button>
+          <div id="langDropdown1" class="topbar-dropdown lang-dropdown hidden">
+            <div class="lang-dropdown-section">
+              <span class="lang-dropdown-label" data-i18n="uiLangLabel">界面语言</span>
+              <div class="lang-toggle" id="uiLangToggle1">
+                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+              </div>
+            </div>
+            <div class="lang-dropdown-section">
+              <span class="lang-dropdown-label" data-i18n="promptLangLabel">提示词</span>
+              <div class="lang-toggle" id="promptLangToggle1">
+                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+              </div>
+            </div>
+            <div class="lang-dropdown-section">
+              <span class="lang-dropdown-label" data-i18n="outputLangLabel">输出</span>
+              <div class="lang-toggle" id="outputLangToggle1">
+                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button id="backToCanvasBtn" class="topbar-icon-btn new-canvas-icon" type="button" data-i18n-tooltip="researchCanvas" data-tooltip="科研画布">
+          <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/></svg>
+        </button>
+      </header>
+
+      <div class="layout1-body">
+        <section id="notice" class="notice hidden" aria-live="polite">
+          <p id="noticeText"></p>
+          <label for="manualFile" class="manual-load-btn hidden" data-i18n="selectLocalFile">选择本地 skills.md</label>
+          <input id="manualFile" type="file" accept=".md,text/markdown" class="hidden" />
+        </section>
+
+        <div id="stagesRoot" class="stages-container"></div>
+
+        <div id="customStagesRoot" class="stages-container"></div>
+
+        <div class="add-stage-bar">
+          <button id="addStageBtn" class="open-add-btn" type="button" data-i18n="addStage">+ 新增阶段</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Layout 2: Canvas flow (default) -->
+    <div id="layout2" class="layout2">
+      <div class="layout2-topbar">
+        <div class="topbar-left">
+          <span class="layout2-title" data-i18n="researchCanvas">科研画布</span>
+        </div>
+        <div class="topbar-center">
+          <button id="newCanvasBtn" class="topbar-icon-btn new-canvas-icon" type="button" data-i18n-tooltip="newCanvas" data-tooltip="新建画布">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z"/></svg>
+          </button>
+          <button id="playMethodBtn" class="topbar-icon-btn hybrid-icon-btn" type="button" data-i18n-tooltip="choosePlayMethod" data-tooltip="选择玩法">
+            <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
+          </button>
+          <button id="aiWandBtn" class="topbar-icon-btn ai-gen-icon" type="button" data-i18n-tooltip="aiGenCanvas" data-tooltip="AI 生成画布">
+            <svg viewBox="0 0 24 24"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7l2.5-1.4zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM14.37 7.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.72 11.05a.996.996 0 0 0 0-1.41l-2.35-2.35zm-1.06 1.06l2.35 2.35-1.06 1.06-2.35-2.35 1.06-1.06z"/></svg>
+          </button>
+        </div>
+        <div class="topbar-right">
+          <button id="layoutCanvasBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="formatCanvas" data-tooltip="格式化画布">
+            <svg viewBox="0 0 24 24"><path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z"/></svg>
+          </button>
+          <div class="topbar-dropdown-wrap" id="saveDropdownWrap">
+            <button id="saveCanvasBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="saveCanvas" data-tooltip="保存画布">
+              <svg viewBox="0 0 24 24"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4zm-5 16a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm3-10H5V5h10v4z"/></svg>
+            </button>
+            <div id="saveDropdown" class="topbar-dropdown hidden">
+              <button id="saveToBrowser" class="topbar-dropdown-item" type="button" data-i18n="saveToBrowser">保存到浏览器</button>
+              <button id="saveToFile" class="topbar-dropdown-item" type="button" data-i18n="saveToFile">保存到文件</button>
+              <button id="exportMarkdown" class="topbar-dropdown-item" type="button" data-i18n="exportMarkdown">导出 Markdown</button>
+            </div>
+          </div>
+          <div class="topbar-dropdown-wrap" id="loadDropdownWrap">
+            <button id="loadCanvasBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="loadCanvas" data-tooltip="加载画布">
+              <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zm0 12H4V8h16v10z"/></svg>
+            </button>
+            <div id="loadDropdown" class="topbar-dropdown hidden">
+              <button id="loadFromBrowser" class="topbar-dropdown-item" type="button" data-i18n="loadFromBrowser">从浏览器加载</button>
+              <button id="loadFromFile" class="topbar-dropdown-item" type="button" data-i18n="loadFromFile">从文件加载</button>
+            </div>
+          </div>
+          <input id="importCanvasFile" type="file" accept=".json" class="hidden" />
+          <button id="resetUsageBtnCanvas" class="topbar-icon-btn" type="button" data-i18n-tooltip="clearUsage" data-tooltip="清空次数">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+          </button>
+          <button id="apiConfigBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="apiConfig" data-tooltip="API 配置">
+            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
+          </button>
+          <div class="topbar-dropdown-wrap" id="langDropdownWrap">
+            <button id="uiLangBtn" class="topbar-icon-btn ui-lang-btn" type="button" data-i18n-tooltip="switchLang" data-tooltip="切换语言">
+              <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+            </button>
+            <div id="langDropdown" class="topbar-dropdown lang-dropdown hidden">
+              <div class="lang-dropdown-section">
+                <span class="lang-dropdown-label" data-i18n="uiLangLabel">界面语言</span>
+                <div class="lang-toggle" id="uiLangToggle">
+                  <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                  <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+                </div>
+              </div>
+              <div class="lang-dropdown-section">
+                <span class="lang-dropdown-label" data-i18n="promptLangLabel">提示词</span>
+                <div class="lang-toggle" id="promptLangToggle">
+                  <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                  <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+                </div>
+              </div>
+              <div class="lang-dropdown-section">
+                <span class="lang-dropdown-label" data-i18n="outputLangLabel">输出</span>
+                <div class="lang-toggle" id="outputLangToggle">
+                  <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
+                  <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button id="toggleLayoutBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="cardManagement" data-tooltip="卡片管理">
+            <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="layout2-body">
+        <div class="layout2-canvas-scroll" id="canvasScroll">
+          <div class="layout2-canvas" id="canvasArea" tabindex="0">
+            <svg class="canvas-arrows" id="canvasArrows">
+              <defs>
+                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                  <polygon points="0 0, 8 4, 0 8" fill="#6c757d" />
+                </marker>
+              </defs>
+            </svg>
+            <div class="canvas-nodes" id="canvasNodes"></div>
+          </div>
+        </div>
+        <div class="layout2-drawer" id="canvasDrawer"></div>
+      </div>
+    </div>
+
+    <div id="addModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+      <div id="addModalMask" class="modal-mask"></div>
+      <section class="modal-panel">
+        <h3 id="addModalTitle" data-i18n="addCard">新增卡片</h3>
+        <details class="meta-template-panel">
+          <summary>
+            <span data-i18n="metaTemplate">元模板</span>
+            <span id="metaStatusText" class="meta-status"></span>
+          </summary>
+          <textarea id="metaTemplateInput" readonly></textarea>
+        </details>
+        <label>
+          <span data-i18n="needLabel">需求</span>
+          <textarea id="metaNeedInput" data-i18n-placeholder="metaPlaceholder" placeholder="例如：把论文 Introduction 压缩成顶会风格 Abstract，300字内。"></textarea>
+        </label>
+        <div class="add-form-actions">
+          <button id="copyMetaBtn" class="create-btn" type="button" data-i18n="copyInput">复制输入</button>
+          <button id="aiGenerateBtn" class="create-btn ai-btn" type="button" data-i18n="aiGenerate">AI 生成</button>
+        </div>
+        <label>
+          Skills
+          <textarea id="addPromptInput" data-i18n-placeholder="promptPlaceholder" placeholder="粘贴 AI 返回内容：第一行写标题，后续写完整 skills 模板。"></textarea>
+        </label>
+        <div class="add-form-actions">
+          <button id="createCardBtn" class="create-btn" type="button" data-i18n="createCard">创建卡片</button>
+          <button id="cancelAddBtn" type="button" data-i18n="cancel">取消</button>
+        </div>
+        <p id="addStatusText" class="add-status"></p>
+      </section>
+    </div>
+
+    <!-- API Config Modal -->
+    <div id="apiConfigModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="apiConfigTitle">
+      <div id="apiConfigMask" class="modal-mask"></div>
+      <section class="modal-panel">
+        <h3 id="apiConfigTitle" data-i18n="apiConfigTitle">API 配置</h3>
+        <div class="api-settings-body">
+          <label>
+            <span data-i18n="vendor">供应商</span>
+            <select id="apiProviderSelect">
+              <option value="deepseek">DeepSeek</option>
+              <option value="openai">OpenAI</option>
+              <option value="zhipu">Zhipu (GLM)</option>
+              <option value="moonshot">Moonshot (Kimi)</option>
+              <option value="mimo">Xiaomi MIMO</option>
+              <option value="anthropic">Anthropic (Claude)</option>
+              <option value="custom">Custom (OpenAI)</option>
+              <option value="custom-anthropic">Custom (Anthropic)</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="apiUrl">API 地址</span>
+            <input id="apiEndpointInput" type="text" placeholder="https://api.example.com/v1/chat/completions" />
+          </label>
+          <label>
+            API Key
+            <input id="apiKeyInput" type="password" placeholder="sk-..." />
+          </label>
+          <label>
+            <span data-i18n="model">模型</span>
+            <input id="apiModelInput" type="text" placeholder="deepseek-chat" />
+          </label>
+          <button id="apiSaveBtn" type="button" data-i18n="saveSettings">保存设置</button>
+          <span id="apiStatusText" class="meta-status"></span>
+        </div>
+        <div class="add-form-actions">
+          <button id="apiConfigCloseBtn" type="button" data-i18n="close">关闭</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Play Method Modal -->
+    <div id="playMethodModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="playMethodTitle">
+      <div id="playMethodMask" class="modal-mask"></div>
+      <section class="modal-panel play-method-panel">
+        <div class="play-method-header">
+          <h3 id="playMethodTitle" data-i18n="choosePlayTitle">请选择你的玩法</h3>
+          <button id="playMethodCloseBtn" class="modal-close-btn" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="play-method-grid">
+          <!-- Row 1: 5 methods ordered by proportion -->
+          <button class="play-method-card" data-method="cross-domain" type="button">
+            <span class="play-method-icon">🧬</span>
+            <span class="play-method-name" data-i18n="pmCrossDomain">A+B 方法迁移</span>
+            <span class="play-method-desc" data-i18n="pmCrossDomainDesc">从两篇跨领域论文中提取方法，交叉融合生成新 Idea</span>
+          </button>
+          <button class="play-method-card" data-method="efficiency" type="button">
+            <span class="play-method-icon">⚡</span>
+            <span class="play-method-name" data-i18n="pmEfficiency">效率优化</span>
+            <span class="play-method-desc" data-i18n="pmEfficiencyDesc">不求最强，求更快、更便宜、更省</span>
+          </button>
+          <button class="play-method-card" data-method="workflow" type="button">
+            <span class="play-method-icon">⚙️</span>
+            <span class="play-method-name" data-i18n="pmWorkflow">Workflow 设计</span>
+            <span class="play-method-desc" data-i18n="pmWorkflowDesc">设计多步骤工作流，不换模型换流程</span>
+          </button>
+          <button class="play-method-card" data-method="robustness" type="button">
+            <span class="play-method-icon">🛡️</span>
+            <span class="play-method-name" data-i18n="pmRobustness">鲁棒性研究</span>
+            <span class="play-method-desc" data-i18n="pmRobustnessDesc">让模型更安全、更抗攻击、更公平</span>
+          </button>
+          <button class="play-method-card" data-method="theory" type="button">
+            <span class="play-method-icon">🔬</span>
+            <span class="play-method-name" data-i18n="pmTheory">设计空间分析</span>
+            <span class="play-method-desc" data-i18n="pmTheoryDesc">解释为什么有效，系统分析设计空间</span>
+          </button>
+          <!-- Row 2: 4 methods ordered by proportion -->
+          <button class="play-method-card" data-method="new-benchmark" type="button">
+            <span class="play-method-icon">📏</span>
+            <span class="play-method-name" data-i18n="pmNewBenchmark">Benchmark 构建</span>
+            <span class="play-method-desc" data-i18n="pmNewBenchmarkDesc">定义新任务、构造测试集、设计评测维度</span>
+          </button>
+          <button class="play-method-card" data-method="system" type="button">
+            <span class="play-method-icon">🏗️</span>
+            <span class="play-method-name" data-i18n="pmSystem">系统论文</span>
+            <span class="play-method-desc" data-i18n="pmSystemDesc">端到端框架，多组件协同，工程可复用</span>
+          </button>
+          <button class="play-method-card" data-method="dataset" type="button">
+            <span class="play-method-icon">📊</span>
+            <span class="play-method-name" data-i18n="pmDataset">数据集构建</span>
+            <span class="play-method-desc" data-i18n="pmDatasetDesc">构造大规模/高质量/新领域数据集</span>
+          </button>
+          <button class="play-method-card" data-method="metric" type="button">
+            <span class="play-method-icon">📐</span>
+            <span class="play-method-name" data-i18n="pmMetric">评估指标设计</span>
+            <span class="play-method-desc" data-i18n="pmMetricDesc">让"怎么判断好坏"更可靠</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- AI Wand Modal -->
+    <div id="aiWandModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aiWandTitle">
+      <div id="aiWandMask" class="modal-mask"></div>
+      <section class="modal-panel" style="max-width:500px">
+        <div class="play-method-header">
+          <h3 id="aiWandTitle" data-i18n="genCanvasTitle">AI 生成画布</h3>
+          <button id="aiWandCloseBtn" class="modal-close-btn" type="button" aria-label="Close">&times;</button>
+        </div>
+        <textarea id="aiWandInput" class="play-method-custom-input" data-i18n-placeholder="genCanvasPlaceholder" placeholder="描述你想要的画布，例如：我想从多个不同领域的论文中各取一个模块，拼成一个新方法..." style="min-height:80px;margin:12px 0"></textarea>
+        <div class="play-method-custom-actions">
+          <button id="aiWandGenerateBtn" class="create-btn ai-gen-btn" type="button">
+            <svg viewBox="0 0 24 24"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7l2.5-1.4zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM14.37 7.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.72 11.05a.996.996 0 0 0 0-1.41l-2.35-2.35zm-1.06 1.06l2.35 2.35-1.06 1.06-2.35-2.35 1.06-1.06z"/></svg>
+            <span data-i18n="genCanvasBtn">生成画布</span>
+          </button>
+        </div>
+        <div id="aiWandStatus" class="play-method-gen-status" style="margin-top:8px;min-height:20px"></div>
+      </section>
+    </div>
+
+    <!-- Canvas Switch Confirm Modal -->
+    <div id="canvasSwitchModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div id="canvasSwitchMask" class="modal-mask"></div>
+      <section class="modal-panel" style="max-width:380px">
+        <h3 data-i18n="canvasHasContent">当前画布有内容</h3>
+        <p style="margin:12px 0 18px;font-size:0.88rem;color:var(--text-muted);line-height:1.5" data-i18n="switchWarning">切换玩法会清空当前画布，是否先保存？</p>
+        <div id="switchMainActions" class="canvas-switch-actions">
+          <button id="switchSaveBtn" class="create-btn" type="button" data-i18n="saveAndContinue">保存并继续</button>
+          <button id="switchDiscardBtn" type="button" data-i18n="discardAndClear">不保存直接清空</button>
+          <button id="switchCancelBtn" type="button" data-i18n="cancel">取消</button>
+        </div>
+        <div id="switchSaveChoice" class="canvas-switch-actions hidden">
+          <p style="margin:0 0 12px;font-size:0.88rem;color:var(--text-muted)" data-i18n="chooseSaveMethod">选择保存方式：</p>
+          <button id="switchSaveToBrowser" class="create-btn" type="button" data-i18n="saveToBrowser">保存到浏览器</button>
+          <button id="switchSaveToFile" class="create-btn" type="button" data-i18n="saveToFile">保存到文件</button>
+          <button id="switchSaveBack" type="button" data-i18n="back">返回</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Save Canvas Modal -->
+    <div id="saveCanvasModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="saveCanvasTitle">
+      <div id="saveCanvasMask" class="modal-mask"></div>
+      <section class="modal-panel">
+        <h3 id="saveCanvasTitle" data-i18n="saveCanvasTitle">保存画布</h3>
+        <label>
+          <span data-i18n="nameLabel">名称</span>
+          <input id="saveCanvasName" type="text" data-i18n-placeholder="saveCanvasPlaceholder" placeholder="例如：杂交论文-方法迁移" />
+        </label>
+        <div class="add-form-actions">
+          <button id="saveCanvasConfirmBtn" class="create-btn" type="button" data-i18n="save">保存</button>
+          <button id="saveCanvasCancelBtn" type="button" data-i18n="cancel">取消</button>
+        </div>
+        <p id="saveCanvasStatus" class="add-status"></p>
+      </section>
+    </div>
+
+    <!-- Load Canvas Modal -->
+    <div id="loadCanvasModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="loadCanvasTitle">
+      <div id="loadCanvasMask" class="modal-mask"></div>
+      <section class="modal-panel">
+        <h3 id="loadCanvasTitle" data-i18n="loadCanvasTitle">加载画布</h3>
+        <div id="savedCanvasList" class="saved-canvas-list"></div>
+        <div class="add-form-actions">
+          <button id="loadCanvasCloseBtn" type="button" data-i18n="close">关闭</button>
+        </div>
+      </section>
+    </div>
+
+    <template id="cardTemplate">
+      <article class="card">
+        <header class="card-head">
+          <div class="card-head-top">
+            <h2 class="card-title"></h2>
+            <span class="card-usage cnode-usage"></span>
+            <div class="card-icon-actions">
+              <button class="icon-btn edit-btn" type="button" data-i18n-tooltip="editCard" aria-label="Edit Card" title="Edit Card">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M3 17.25V21h3.75L19.81 7.94l-3.75-3.75L3 17.25zm14.71-9.04a1 1 0 0 0 0-1.41l-1.5-1.5a1 1 0 0 0-1.41 0l-1.13 1.12 3.75 3.75 1.29-1.96z"/>
+                </svg>
+              </button>
+<button class="icon-btn delete-btn hidden" type="button" data-i18n-tooltip="deleteCard" aria-label="Delete Card" title="Delete Card">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 7h12l-1 14H7L6 7zm3-3h6l1 1h4v2H4V5h4l1-1z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </header>
+        <textarea class="card-input cnode-textarea" data-i18n-placeholder="inputPlaceholder"></textarea>
+        <div class="card-actions cnode-actions">
+          <button class="preview-toggle-btn cnode-copy-btn cnode-preview-toggle" type="button" data-i18n="viewTemplate">查看模板</button>
+          <button class="copy-btn cnode-copy-btn" type="button" data-i18n="copyInput">复制输入</button>
+        </div>
+        <div class="card-preview cnode-preview">
+          <pre></pre>
+        </div>
+        <div class="card-output-wrap">
+          <div class="card-output-label cnode-output-label" data-i18n="outputLabel">输出</div>
+          <textarea class="card-output cnode-textarea cnode-output" readonly data-i18n-placeholder="outputPlaceholder"></textarea>
+          <div class="card-output-actions cnode-actions">
+            <button class="ai-gen-btn cnode-copy-btn cnode-api-btn" type="button" data-i18n="genOutput">生成输出</button>
+            <button class="copy-output-btn cnode-copy-btn" type="button" data-i18n="copyOutput">复制输出</button>
+          </div>
+        </div>
+        <p class="card-api-status cnode-status" aria-live="polite"></p>
+        <section class="edit-panel hidden">
+          <label>
+            <span data-i18n="titleLabel">标题</span>
+            <input class="edit-title" type="text" />
+          </label>
+          <label>
+            <span data-i18n="templateContent">模板内容</span>
+            <textarea class="edit-prompt"></textarea>
+          </label>
+          <div class="edit-actions">
+            <button class="save-edit-btn" type="button" data-i18n="saveEdit">保存修改</button>
+            <button class="cancel-edit-btn" type="button" data-i18n="cancel">取消</button>
+          </div>
+        </section>
+        <p class="copy-status" aria-live="polite"></p>
+      </article>
+    </template>
+
+    <div class="floating-actions">
+      <button id="toggleCollapseBtn" class="floating-btn" type="button" data-i18n-tooltip="collapseExpand" title="折叠/展开所有阶段" data-i18n="collapse">折叠</button>
+      <button id="scrollTopBtn" class="floating-btn" type="button" data-i18n-tooltip="backToTop" title="回到顶部">↑</button>
+    </div>
+
+    <script src="./app.js"></script>
+    <script src="./canvas.js"></script>
+  </body>
+</html>
