@@ -6,22 +6,27 @@ const PRIMARY_DATA_SOURCE_EN = "./skills-en.md";
 const FALLBACK_DATA_SOURCE = "./README.md";
 let currentPromptLang = "zh";
 
+// Project last push time — update before each push
+const LAST_MODIFIED = "2026-05-08 14:45:00";
+
 // ── UI i18n ──
 const UI_STRINGS = {
   zh: {
-    siteTitle: "ScholarCanvas 学术画布",
+    siteTitle: "杂交水论 A+B Alchemy",
     cardManagement: "卡片管理",
-    researchCanvas: "布局",
+    researchCanvas: "杂交水论",
     newCanvas: "新建画布",
+    newLayout: "新布局",
     choosePlayMethod: "选择玩法",
     aiGenCanvas: "AI 生成画布",
     runPipeline: "一键运行",
     pause: "暂停",
     resume: "继续",
     formatCanvas: "格式化画布",
+    undo: "撤销",
+    redo: "重做",
     saveCanvas: "保存画布",
     loadCanvas: "加载画布",
-    clearUsage: "清空次数",
     apiConfig: "API 配置",
     switchLang: "切换语言",
     promptZh: "提示词 中",
@@ -110,6 +115,7 @@ const UI_STRINGS = {
     generating: "生成中",
     failed: "失败：",
     done: "完成",
+    inputEmpty: "输入为空",
     selectLocalFile: "选择本地 skills.md",
     inputPlaceholder: "输入区：把要处理的内容贴在这里...",
     outputPlaceholder: "AI 输出结果...",
@@ -174,21 +180,24 @@ const UI_STRINGS = {
     uiLangLabel: "界面语言",
     promptLangLabel: "提示词",
     outputLangLabel: "输出",
+    updatedAt: "更新于 {time}",
   },
   en: {
-    siteTitle: "ScholarCanvas",
+    siteTitle: "A+B Alchemy",
     cardManagement: "Card Management",
-    researchCanvas: "Mastermind",
+    researchCanvas: "A+B Alchemy",
     newCanvas: "New Canvas",
+    newLayout: "New Layout",
     choosePlayMethod: "Play Methods",
     aiGenCanvas: "AI Generate Canvas",
     runPipeline: "Run Pipeline",
     pause: "Pause",
     resume: "Resume",
     formatCanvas: "Format Canvas",
+    undo: "Undo",
+    redo: "Redo",
     saveCanvas: "Save Canvas",
     loadCanvas: "Load Canvas",
-    clearUsage: "Reset Usage",
     apiConfig: "API Config",
     switchLang: "Switch Language",
     promptZh: "Prompt ZH",
@@ -277,6 +286,7 @@ const UI_STRINGS = {
     generating: "Generating",
     failed: "Failed: ",
     done: "Done",
+    inputEmpty: "Input empty",
     selectLocalFile: "Select local skills.md",
     inputPlaceholder: "Input: paste content to process here...",
     outputPlaceholder: "AI output...",
@@ -341,6 +351,7 @@ const UI_STRINGS = {
     uiLangLabel: "Interface",
     promptLangLabel: "Prompt",
     outputLangLabel: "Output",
+    updatedAt: "Updated {time}",
   },
 };
 
@@ -495,14 +506,12 @@ const customStagesRoot = document.getElementById("customStagesRoot");
 const addStageBtn = document.getElementById("addStageBtn");
 const cardCount = document.getElementById("cardCount");
 const cardTemplate = document.getElementById("cardTemplate");
-const resetUsageBtn = document.getElementById("resetUsageBtn");
 
-const toggleLayoutBtn = document.getElementById("toggleLayoutBtn");
-const layout1El = document.getElementById("layout1");
 const layout2El = document.getElementById("layout2");
 const newCanvasBtn = document.getElementById("newCanvasBtn");
 const aiWandBtn = document.getElementById("aiWandBtn");
 const layoutCanvasBtn = document.getElementById("layoutCanvasBtn");
+const canvasNameEl = document.getElementById("canvasName");
 
 const DEFAULT_USER_CARDS = [
   {
@@ -628,7 +637,6 @@ const aiGenerateBtn = document.getElementById("aiGenerateBtn");
 const apiConfigModal = document.getElementById("apiConfigModal");
 const apiConfigMask = document.getElementById("apiConfigMask");
 const apiConfigBtn = document.getElementById("apiConfigBtn");
-const apiConfigCloseBtn = document.getElementById("apiConfigCloseBtn");
 const notice = document.getElementById("notice");
 const noticeText = document.getElementById("noticeText");
 const manualFile = document.getElementById("manualFile");
@@ -745,6 +753,10 @@ async function init() {
     // No data source, still init canvas
     state = normalizeState(loadState());
     refreshAllItems();
+    // Update canvas name in UI
+    if (canvasNameEl && state.canvasName) {
+      canvasNameEl.textContent = state.canvasName;
+    }
     switchToLayout2();
     return;
   }
@@ -789,25 +801,9 @@ manualFile.addEventListener("change", async (event) => {
   const text = await file.text();
   parseAndInit(text);
   // Refresh whichever layout is active
-  if (layout2El && !layout2El.classList.contains("hidden")) {
-    switchToLayout2();
-  } else {
-    layout1Rendered = false;
-    switchToLayout1();
-  }
+  switchToLayout2();
 });
 
-if (resetUsageBtn) {
-  resetUsageBtn.addEventListener("click", () => {
-    resetAllUsageCount();
-  });
-}
-const resetUsageBtnCanvas = document.getElementById("resetUsageBtnCanvas");
-if (resetUsageBtnCanvas) {
-  resetUsageBtnCanvas.addEventListener("click", () => {
-    resetAllUsageCount();
-  });
-}
 
 function parseAndInit(markdown) {
   try {
@@ -821,6 +817,11 @@ function parseAndInit(markdown) {
     try { seedDefaultUserCards(); } catch (e) { console.error("seed error:", e); }
     refreshAllItems();
     saveState();
+
+    // Update canvas name in UI
+    if (canvasNameEl && state.canvasName) {
+      canvasNameEl.textContent = state.canvasName;
+    }
 
     if (allItems.length === 0) {
       showNotice(t("noticeNoTemplates"));
@@ -1022,6 +1023,7 @@ function render(options = {}) {
 }
 
 function renderStages(stageItems) {
+  if (!stagesRoot) return;
   stagesRoot.innerHTML = "";
   // Exclude items belonging to custom stages — they're rendered by renderCustomStages
   const customStageNames = new Set(state.customStages.map((s) => s.name));
@@ -1327,17 +1329,6 @@ function createCard(item, zone, index) {
   input.placeholder = extractPlaceholder(item.prompt);
   if (previewPre) previewPre.textContent = item.prompt;
 
-  // Usage count badge
-  const usageBadge = node.querySelector(".card-usage");
-  const uc = getUsageCount(item.id);
-  if (usageBadge) {
-    if (uc > 0) {
-      usageBadge.textContent = uc;
-    } else {
-      usageBadge.style.display = "none";
-    }
-  }
-
   // Preview toggle
   if (previewToggleBtn && preview) {
     previewToggleBtn.addEventListener("click", () => {
@@ -1362,14 +1353,6 @@ function createCard(item, zone, index) {
 
   copyBtn.addEventListener("click", async () => {
     const content = mergePromptAndInput(item.prompt, input.value);
-    if (input.value.trim()) {
-      const nextCount = incrementUsageCount(item.id, { skipRender: true });
-      const usageNode = node.querySelector(".card-usage");
-      if (usageNode) {
-        usageNode.textContent = nextCount;
-        usageNode.style.display = "";
-      }
-    }
     try {
       await copyToClipboard(content);
       setStatus(status, "已复制到剪贴板", "success");
@@ -1684,7 +1667,7 @@ async function handleAiGenerate() {
 }
 
 function bindApiConfig() {
-  if (!apiConfigModal || !apiConfigBtn) return;
+  if (!apiConfigModal) return;
 
   const apiConfigBtn1 = document.getElementById("apiConfigBtn1");
   const openApiConfig = () => {
@@ -1697,7 +1680,7 @@ function bindApiConfig() {
     apiEndpointInput.value = cfg.endpoint || (prov ? prov.endpoint : "");
   };
 
-  apiConfigBtn.addEventListener("click", openApiConfig);
+  if (apiConfigBtn) apiConfigBtn.addEventListener("click", openApiConfig);
   if (apiConfigBtn1) apiConfigBtn1.addEventListener("click", openApiConfig);
 
   if (apiConfigMask) {
@@ -1706,8 +1689,9 @@ function bindApiConfig() {
     });
   }
 
-  if (apiConfigCloseBtn) {
-    apiConfigCloseBtn.addEventListener("click", () => {
+  const apiConfigCloseX = document.getElementById("apiConfigCloseX");
+  if (apiConfigCloseX) {
+    apiConfigCloseX.addEventListener("click", () => {
       apiConfigModal.classList.add("hidden");
     });
   }
@@ -1717,7 +1701,7 @@ function bindApiConfig() {
       const defaults = API_PROVIDERS[apiProviderSelect.value];
       if (defaults) {
         if (defaults.endpoint) apiEndpointInput.value = defaults.endpoint;
-        apiModelInput.placeholder = defaults.model || "";
+        if (defaults.model) apiModelInput.value = defaults.model;
       }
     });
   }
@@ -1730,36 +1714,44 @@ function bindApiConfig() {
         apiKey: apiKeyInput.value.trim(),
         model: apiModelInput.value.trim(),
       });
-      apiStatusText.textContent = t("saved");
-      apiStatusText.className = "meta-status success";
-      setTimeout(() => { apiStatusText.textContent = ""; }, 2000);
+      apiConfigModal.classList.add("hidden");
     });
   }
 
-  // Language dropdown
-  const langDropdownWrap = document.getElementById("langDropdownWrap");
-  const langDropdown = document.getElementById("langDropdown");
-  const langDropdownWrap1 = document.getElementById("langDropdownWrap1");
-  const langDropdown1 = document.getElementById("langDropdown1");
-
-  function toggleLangDropdown(dropdown) {
-    if (!dropdown) return;
-    const isHidden = dropdown.classList.contains("hidden");
-    // Close all dropdowns first
-    document.querySelectorAll(".topbar-dropdown").forEach((d) => d.classList.add("hidden"));
-    if (isHidden) dropdown.classList.remove("hidden");
-  }
-
-  if (langDropdownWrap) {
-    langDropdownWrap.querySelector("#uiLangBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleLangDropdown(langDropdown);
-    });
-  }
-  if (langDropdownWrap1) {
-    langDropdownWrap1.querySelector("#uiLangBtn1").addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleLangDropdown(langDropdown1);
+  const apiTestBtn = document.getElementById("apiTestBtn");
+  const apiTestStatus = document.getElementById("apiTestStatus");
+  if (apiTestBtn) {
+    apiTestBtn.addEventListener("click", async () => {
+      const endpoint = apiEndpointInput.value.trim();
+      const apiKey = apiKeyInput.value.trim();
+      const model = apiModelInput.value.trim();
+      if (!endpoint || !apiKey || !model) {
+        apiTestStatus.textContent = "请填写完整配置";
+        apiTestStatus.className = "meta-status error";
+        return;
+      }
+      apiTestBtn.disabled = true;
+      apiTestBtn.textContent = "测试中...";
+      apiTestStatus.textContent = "";
+      try {
+        const prov = API_PROVIDERS[apiProviderSelect.value];
+        const testCfg = {
+          endpoint,
+          apiKey,
+          model,
+          format: prov ? prov.format : "openai",
+        };
+        let response = "";
+        await callApi(testCfg, "你是一个测试助手。", "嗨", (text) => { response += text; });
+        apiTestStatus.textContent = "连接成功";
+        apiTestStatus.className = "meta-status success";
+      } catch (err) {
+        apiTestStatus.textContent = "连接失败: " + err.message;
+        apiTestStatus.className = "meta-status error";
+      } finally {
+        apiTestBtn.disabled = false;
+        apiTestBtn.textContent = "测试连接";
+      }
     });
   }
 
@@ -1786,13 +1778,8 @@ function bindApiConfig() {
       if (layout2El && !layout2El.classList.contains("hidden")) {
         const ordered = buildDrawerData();
         const trashData = buildTrashData();
-        CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash);
+        CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
       }
-    }
-    // Re-render card management layout if visible
-    if (layout1El && !layout1El.classList.contains("hidden")) {
-      layout1Rendered = false;
-      render();
     }
     // Sync both toggles
     document.querySelectorAll("#uiLangToggle .lang-toggle-btn, #uiLangToggle1 .lang-toggle-btn").forEach((b) => {
@@ -1850,11 +1837,7 @@ function bindApiConfig() {
 }
 
 function bindLayoutSwitch() {
-  if (!toggleLayoutBtn || !layout2El) return;
-
-  toggleLayoutBtn.addEventListener("click", () => {
-    switchToLayout1();
-  });
+  if (!layout2El) return;
 
   const backToCanvasBtn = document.getElementById("backToCanvasBtn");
   if (backToCanvasBtn) {
@@ -1869,7 +1852,46 @@ function bindLayoutSwitch() {
       confirmCanvasSwitch((choice) => {
         if (choice === "cancel") return;
         CanvasApp.clear();
+        state.canvasName = t("newLayout");
+        if (canvasNameEl) canvasNameEl.textContent = t("newLayout");
+        saveState();
       });
+    });
+  }
+
+  // Canvas name editing
+  if (canvasNameEl) {
+    // Load saved name
+    if (state.canvasName) {
+      canvasNameEl.textContent = state.canvasName;
+    }
+
+    // Click to edit
+    canvasNameEl.addEventListener("click", () => {
+      canvasNameEl.contentEditable = "true";
+      canvasNameEl.focus();
+      // Select all text
+      const range = document.createRange();
+      range.selectNodeContents(canvasNameEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    });
+
+    // Save on blur or Enter
+    canvasNameEl.addEventListener("blur", () => {
+      canvasNameEl.contentEditable = "false";
+      const name = canvasNameEl.textContent.trim() || t("newLayout");
+      canvasNameEl.textContent = name;
+      state.canvasName = name;
+      saveState();
+    });
+
+    canvasNameEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        canvasNameEl.blur();
+      }
     });
   }
 
@@ -1902,7 +1924,7 @@ function bindLayoutSwitch() {
 
   window.runPipelineFromStart = function() {
     if (pipelineRunning) return;
-    if (pipelinePlayBtn) pipelinePlayBtn.click();
+    runPipeline();
   };
 
   if (pipelinePlayBtn) {
@@ -1939,6 +1961,8 @@ function bindLayoutSwitch() {
     document.querySelectorAll(".cnode.running, .cnode.done, .cnode.error").forEach((el) => {
       el.classList.remove("running", "done", "error");
     });
+    if (CanvasApp.clearEdgeClasses) CanvasApp.clearEdgeClasses();
+    if (CanvasApp.dimBulb) CanvasApp.dimBulb();
 
     const canvasState = CanvasApp.getState();
     const canvasNodes = canvasState.nodes || [];
@@ -2005,6 +2029,7 @@ function bindLayoutSwitch() {
       pipelinePlayBtn.classList.add("running");
       pipelinePlayBtn.dataset.tooltip = currentPromptLang === "en" ? "Pause" : "暂停";
     }
+    if (CanvasApp.pulseBulb) CanvasApp.pulseBulb();
 
     const cardMap = new Map();
     allItems.forEach((card) => {
@@ -2014,6 +2039,7 @@ function bindLayoutSwitch() {
     });
 
     const total = execOrder.length;
+    let pipelineError = false;
     try {
       for (let step = 0; step < execOrder.length; step++) {
         const nodeId = execOrder[step];
@@ -2043,6 +2069,10 @@ function bindLayoutSwitch() {
           nodeEl.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
         }
 
+        // Animate incoming edges
+        const incomingEdgeIds = canvasEdges.filter((e) => e.to === nodeId).map((e) => e.id);
+        incomingEdgeIds.forEach((eid) => { if (CanvasApp.setEdgeClass) CanvasApp.setEdgeClass(eid, "running"); });
+
         // Collect input from parent outputs
         const parentEdges = canvasEdges.filter((e) => e.to === nodeId);
         let inputText = "";
@@ -2070,11 +2100,21 @@ function bindLayoutSwitch() {
           }
         }
 
-        // Skip if no input (leaf node with no parent output and no manual input)
+        // Check if input is empty - stop pipeline
         const finalInput = node.inputValue || "";
         if (!finalInput.trim()) {
-          if (nodeEl) nodeEl.classList.remove("running");
-          continue;
+          const titleError = nodeEl ? nodeEl.querySelector(".cnode-title-error") : null;
+          if (titleError) {
+            titleError.textContent = currentPromptLang === "en" ? "Input empty, stopped" : "输入为空，停止运行";
+            titleError.className = "cnode-title-error visible";
+          }
+          if (nodeEl) {
+            nodeEl.classList.remove("running");
+            nodeEl.classList.add("error");
+          }
+          incomingEdgeIds.forEach((eid) => { if (CanvasApp.setEdgeClass) CanvasApp.setEdgeClass(eid, "error"); });
+          pipelineError = true;
+          break;
         }
 
         // Build the prompt with language settings
@@ -2127,12 +2167,20 @@ function bindLayoutSwitch() {
           nodeEl.classList.remove("running");
           nodeEl.classList.add("done");
         }
+
+        // Mark incoming edges as done
+        incomingEdgeIds.forEach((eid) => { if (CanvasApp.setEdgeClass) CanvasApp.setEdgeClass(eid, "done"); });
       }
     } catch (err) {
+      pipelineError = true;
       if (err.name !== "AbortError") {
         console.error("Pipeline error:", err);
       }
     } finally {
+      // Fill cup only on success (no abort, no error)
+      if (!pipelineError && !pipelineAbort?.signal.aborted) {
+        if (CanvasApp.lightBulb) CanvasApp.lightBulb();
+      }
       // Clean up
       document.querySelectorAll(".cnode.running").forEach((el) => el.classList.remove("running"));
       pipelineRunning = false;
@@ -2312,6 +2360,8 @@ function bindLayoutSwitch() {
   function closeAllDropdowns() {
     if (saveDropdown) saveDropdown.classList.add("hidden");
     if (loadDropdown) loadDropdown.classList.add("hidden");
+    const settingsDropdownEl = document.getElementById("settingsDropdown");
+    if (settingsDropdownEl) settingsDropdownEl.classList.add("hidden");
   }
 
   if (saveCanvasBtn) {
@@ -2707,6 +2757,56 @@ Output only the title line + JSON array, no additional explanation.`;
       }
     });
   }
+
+  // ── Settings Dropdown ──
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsDropdown = document.getElementById("settingsDropdown");
+  const settingsApiBtn = document.getElementById("settingsApiBtn");
+  const settingsClearCacheBtn = document.getElementById("settingsClearCacheBtn");
+
+  if (settingsBtn && settingsDropdown) {
+    settingsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = !settingsDropdown.classList.contains("hidden");
+      closeAllDropdowns();
+      if (!isOpen) {
+        settingsDropdown.classList.remove("hidden");
+        // Show last push time
+        const tsEl = document.getElementById("settingsTimestamp");
+        if (tsEl) {
+          tsEl.textContent = t("updatedAt").replace("{time}", LAST_MODIFIED);
+        }
+      }
+    });
+  }
+
+  if (settingsApiBtn) {
+    settingsApiBtn.addEventListener("click", () => {
+      settingsDropdown.classList.add("hidden");
+      if (apiConfigModal) apiConfigModal.classList.remove("hidden");
+    });
+  }
+
+  if (settingsClearCacheBtn) {
+    settingsClearCacheBtn.addEventListener("click", () => {
+      settingsDropdown.classList.add("hidden");
+      if (confirm("确定清除所有本地缓存？页面将刷新。")) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+  }
+
+
+  // ── Drawer toggle ──
+  const drawerEl = document.getElementById("canvasDrawer");
+  const drawerToggleBtn = document.getElementById("drawerToggleBtn");
+
+  if (drawerToggleBtn && drawerEl) {
+    drawerToggleBtn.addEventListener("click", () => {
+      drawerEl.classList.toggle("collapsed");
+    });
+  }
 }
 
 function confirmCanvasSwitch(callback) {
@@ -3093,7 +3193,6 @@ function buildTrashData() {
 }
 
 function switchToLayout2() {
-  if (layout1El) layout1El.classList.add("hidden");
   document.querySelector(".bg-layer-a").classList.add("hidden");
   document.querySelector(".bg-layer-b").classList.add("hidden");
   document.querySelector(".floating-actions").classList.add("hidden");
@@ -3102,7 +3201,7 @@ function switchToLayout2() {
   const ordered = buildDrawerData();
   const trashData = buildTrashData();
   CanvasApp.setAllItems(allItems);
-  CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash);
+  CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
 }
 
 function handleDrawerAddCard(stageKey) {
@@ -3117,6 +3216,17 @@ function handleDrawerAddStage() {
 
 function handleDrawerDeleteStage(stageId) {
   deleteCustomStage(stageId);
+}
+
+function handleDrawerRenameStage(stageId, newName) {
+  renameCustomStage(stageId, newName);
+}
+
+function handleDrawerRenameCard(cardId, newTitle) {
+  const item = allItems.find((c) => c.id === cardId);
+  if (!item) return;
+  updateCard(cardId, newTitle, item.prompt || "");
+  refreshAllItems();
 }
 
 function handleDrawerRestoreStage(trashIndex) {
@@ -3137,20 +3247,6 @@ function handleDrawerReorder(draggedId, targetId) {
   sorted.forEach((s, i) => { s.order = i; });
   state.customStages = sorted;
   commitState();
-}
-
-let layout1Rendered = false;
-
-function switchToLayout1() {
-  if (!layout1Rendered) {
-    render();
-    layout1Rendered = true;
-  }
-  layout2El.classList.add("hidden");
-  if (layout1El) layout1El.classList.remove("hidden");
-  document.querySelector(".bg-layer-a").classList.remove("hidden");
-  document.querySelector(".bg-layer-b").classList.remove("hidden");
-  document.querySelector(".floating-actions").classList.remove("hidden");
 }
 
 function parseGeneratedSkill(rawText) {
@@ -3252,7 +3348,6 @@ function addToCommon(cardId) {
 
 function removeFromCommon(cardId) {
   state.commonIds = state.commonIds.filter((id) => id !== cardId);
-  resetUsageCount(cardId);
   commitState();
 }
 
@@ -3309,47 +3404,8 @@ function deleteCard(cardId) {
 
   delete state.editedCards[cardId];
   state.commonIds = state.commonIds.filter((id) => id !== cardId);
-  resetUsageCount(cardId);
   inputStore.delete(cardId);
   commitState();
-}
-
-function getUsageCount(cardId) {
-  const map = state.usageCountById || {};
-  const value = Number(map[cardId] || 0);
-  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
-}
-
-function incrementUsageCount(cardId, options) {
-  if (!state.usageCountById || typeof state.usageCountById !== "object") {
-    state.usageCountById = {};
-  }
-  const current = getUsageCount(cardId);
-  const next = current + 1;
-  state.usageCountById[cardId] = next;
-  saveState();
-  if (!options || !options.skipRender) {
-    render({ suppressAnimation: true });
-  }
-  return next;
-}
-
-function resetUsageCount(cardId) {
-  if (!state.usageCountById || typeof state.usageCountById !== "object") {
-    return;
-  }
-  if (state.usageCountById[cardId]) {
-    delete state.usageCountById[cardId];
-  }
-}
-
-function resetAllUsageCount() {
-  state.usageCountById = {};
-  commitState();
-}
-
-function applyUsageSort() {
-  // Sorting by usage within stages — to be implemented if needed
 }
 
 function buildCustomCardId() {
@@ -3368,7 +3424,7 @@ function commitState(options = {}) {
   // Rebuild layout 2 drawer if visible
   if (layout2El && !layout2El.classList.contains("hidden")) {
     CanvasApp.setAllItems(allItems);
-    CanvasApp.init(buildDrawerData(), handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, buildTrashData(), handleDrawerRestoreStage, handleDrawerEmptyTrash);
+    CanvasApp.init(buildDrawerData(), handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, buildTrashData(), handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
   }
 }
 
@@ -3463,11 +3519,10 @@ function createDefaultState() {
     customCards: [],
     customStages: [],
     trashedStages: [],
-    usageCountById: {},
-    sortByUsage: false,
     editedCards: {},
     deletedCardIds: [],
     userCardsSeeded: false,
+    canvasName: t("newLayout"),
   };
 }
 
@@ -3536,7 +3591,6 @@ function deleteCustomStage(stageId) {
   state.customCards = state.customCards.filter((c) => c.stageId !== stageId);
   cards.forEach((c) => {
     state.commonIds = state.commonIds.filter((cid) => cid !== c.id);
-    resetUsageCount(c.id);
     inputStore.delete(c.id);
   });
   commitState();
@@ -3634,18 +3688,6 @@ function normalizeState(raw) {
       }))
       .filter((t) => t.stage.id);
   }
-  if (raw.usageCountById && typeof raw.usageCountById === "object") {
-    Object.keys(raw.usageCountById).forEach((id) => {
-      const count = Number(raw.usageCountById[id]);
-      if (!id || !Number.isFinite(count) || count <= 0) {
-        return;
-      }
-      next.usageCountById[id] = Math.floor(count);
-    });
-  }
-  if (typeof raw.sortByUsage === "boolean") {
-    next.sortByUsage = raw.sortByUsage;
-  }
   if (typeof raw.userCardsSeeded === "boolean") {
     next.userCardsSeeded = raw.userCardsSeeded;
   }
@@ -3665,6 +3707,9 @@ function normalizeState(raw) {
   }
   if (Array.isArray(raw.deletedCardIds)) {
     next.deletedCardIds = raw.deletedCardIds.filter((id) => typeof id === "string");
+  }
+  if (typeof raw.canvasName === "string" && raw.canvasName.trim()) {
+    next.canvasName = raw.canvasName.trim();
   }
 
   return next;
@@ -3711,6 +3756,21 @@ function mergePromptAndInput(promptTemplate, inputText) {
   return `${template}\n\n${userText}`;
 }
 
+async function fetchPageText(url) {
+  const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+  const resp = await fetch(proxyUrl);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const html = await resp.text();
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const article = doc.querySelector("article") || doc.querySelector(".ltx_page_main") || doc.body;
+  if (!article) throw new Error("无法解析网页内容");
+  article.querySelectorAll("script,style,nav,footer,header,aside,noscript,iframe").forEach((el) => el.remove());
+  let text = article.innerText || article.textContent || "";
+  text = text.replace(/\n\s*\n/g, "\n\n").trim();
+  if (text.length > 15000) text = text.slice(0, 15000) + "\n...(内容已截断)";
+  return text;
+}
+
 async function copyToClipboard(text) {
   if (navigator.clipboard && window.isSecureContext) {
     await navigator.clipboard.writeText(text);
@@ -3735,7 +3795,7 @@ async function copyToClipboard(text) {
 function stateToMarkdown(state) {
   const nodes = state.nodes || [];
   const edges = state.edges || [];
-  if (nodes.length === 0) return "# ScholarCanvas\n\n(空画布)";
+  if (nodes.length === 0) return "# 杂交水论\n\n(空画布)";
 
   // Build card lookup
   const cardMap = new Map();
@@ -3768,7 +3828,7 @@ function stateToMarkdown(state) {
   const pad = (n) => String(n).padStart(2, "0");
   const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  let md = `# ScholarCanvas\n\n> ${dateStr}\n\n---\n\n`;
+  let md = `# 杂交水论\n\n> ${dateStr}\n\n---\n\n`;
 
   order.forEach((nodeId, idx) => {
     const node = nodes.find((n) => n.id === nodeId);

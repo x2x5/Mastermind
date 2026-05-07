@@ -3,77 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ScholarCanvas 学术画布</title>
+    <title>杂交水论 A+B Alchemy</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="bg-layer bg-layer-a" aria-hidden="true"></div>
     <div class="bg-layer bg-layer-b" aria-hidden="true"></div>
-    <div id="layout1" class="layout1 hidden">
-      <header class="layout1-topbar">
-        <span class="layout1-title" data-i18n="cardManagement">卡片管理</span>
-        <div class="topbar-spacer"></div>
-        <button id="resetUsageBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="clearUsage" data-tooltip="清空次数">
-          <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-        </button>
-        <button id="apiConfigBtn1" class="topbar-icon-btn" type="button" data-i18n-tooltip="apiConfig" data-tooltip="API 配置">
-          <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
-        </button>
-        <div class="topbar-dropdown-wrap" id="langDropdownWrap1">
-          <button id="uiLangBtn1" class="topbar-icon-btn ui-lang-btn" type="button" data-i18n-tooltip="switchLang" data-tooltip="切换语言">
-            <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-          </button>
-          <div id="langDropdown1" class="topbar-dropdown lang-dropdown hidden">
-            <div class="lang-dropdown-section">
-              <span class="lang-dropdown-label" data-i18n="uiLangLabel">界面语言</span>
-              <div class="lang-toggle" id="uiLangToggle1">
-                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
-                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
-              </div>
-            </div>
-            <div class="lang-dropdown-section">
-              <span class="lang-dropdown-label" data-i18n="promptLangLabel">提示词</span>
-              <div class="lang-toggle" id="promptLangToggle1">
-                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
-                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
-              </div>
-            </div>
-            <div class="lang-dropdown-section">
-              <span class="lang-dropdown-label" data-i18n="outputLangLabel">输出</span>
-              <div class="lang-toggle" id="outputLangToggle1">
-                <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
-                <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <button id="backToCanvasBtn" class="topbar-icon-btn new-canvas-icon" type="button" data-i18n-tooltip="researchCanvas" data-tooltip="科研画布">
-          <svg viewBox="0 0 24 24"><path d="M3 3h18v18H3V3zm2 2v14h14V5H5z"/></svg>
-        </button>
-      </header>
-
-      <div class="layout1-body">
-        <section id="notice" class="notice hidden" aria-live="polite">
-          <p id="noticeText"></p>
-          <label for="manualFile" class="manual-load-btn hidden" data-i18n="selectLocalFile">选择本地 skills.md</label>
-          <input id="manualFile" type="file" accept=".md,text/markdown" class="hidden" />
-        </section>
-
-        <div id="stagesRoot" class="stages-container"></div>
-
-        <div id="customStagesRoot" class="stages-container"></div>
-
-        <div class="add-stage-bar">
-          <button id="addStageBtn" class="open-add-btn" type="button" data-i18n="addStage">+ 新增阶段</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Layout 2: Canvas flow (default) -->
     <div id="layout2" class="layout2">
       <div class="layout2-topbar">
         <div class="topbar-left">
-          <span class="layout2-title" data-i18n="researchCanvas">科研画布</span>
+          <span class="canvas-name" id="canvasName" contenteditable="false">新布局</span>
+          <button id="undoBtn" class="topbar-icon-btn has-badge" type="button" data-i18n-tooltip="undo" data-tooltip="撤销" disabled>
+            <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05 1.04-6.83 2.73L3 8v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+            <span class="badge" id="undoBadge"></span>
+          </button>
+          <button id="redoBtn" class="topbar-icon-btn has-badge" type="button" data-i18n-tooltip="redo" data-tooltip="重做" disabled>
+            <svg viewBox="0 0 24 24"><path d="M18.4 10.6C16.55 8.99 14.15 8 11.5 8c-4.65 0-8.58 3.03-9.96 7.22L3.9 16c1.05-3.19 4.05-5.5 7.6-5.5 1.95 0 3.73.72 5.12 1.88L13 16h9V7l-3.6 3.6z"/></svg>
+            <span class="badge" id="redoBadge"></span>
+          </button>
         </div>
         <div class="topbar-center">
           <button id="newCanvasBtn" class="topbar-icon-btn new-canvas-icon" type="button" data-i18n-tooltip="newCanvas" data-tooltip="新建画布">
@@ -110,59 +59,65 @@
             </div>
           </div>
           <input id="importCanvasFile" type="file" accept=".json" class="hidden" />
-          <button id="resetUsageBtnCanvas" class="topbar-icon-btn" type="button" data-i18n-tooltip="clearUsage" data-tooltip="清空次数">
-            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+          <button id="drawerToggleBtn" class="topbar-icon-btn" type="button" data-tooltip="切换面板">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="18" rx="1" fill="currentColor" opacity="0.5"/></svg>
           </button>
-          <button id="apiConfigBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="apiConfig" data-tooltip="API 配置">
-            <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
-          </button>
-          <div class="topbar-dropdown-wrap" id="langDropdownWrap">
-            <button id="uiLangBtn" class="topbar-icon-btn ui-lang-btn" type="button" data-i18n-tooltip="switchLang" data-tooltip="切换语言">
-              <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+          <div class="topbar-dropdown-wrap" id="settingsDropdownWrap">
+            <button id="settingsBtn" class="topbar-icon-btn" type="button" data-tooltip="设置">
+              <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
             </button>
-            <div id="langDropdown" class="topbar-dropdown lang-dropdown hidden">
-              <div class="lang-dropdown-section">
-                <span class="lang-dropdown-label" data-i18n="uiLangLabel">界面语言</span>
+            <div id="settingsDropdown" class="topbar-dropdown settings-dropdown hidden">
+              <button id="settingsApiBtn" class="topbar-dropdown-item" type="button">API 设置</button>
+              <div class="settings-divider"></div>
+              <div class="settings-section">
+                <span class="settings-label" data-i18n="uiLangLabel">界面语言</span>
                 <div class="lang-toggle" id="uiLangToggle">
                   <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
                   <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
                 </div>
               </div>
-              <div class="lang-dropdown-section">
-                <span class="lang-dropdown-label" data-i18n="promptLangLabel">提示词</span>
+              <div class="settings-section">
+                <span class="settings-label" data-i18n="promptLangLabel">提示词</span>
                 <div class="lang-toggle" id="promptLangToggle">
                   <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
                   <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
                 </div>
               </div>
-              <div class="lang-dropdown-section">
-                <span class="lang-dropdown-label" data-i18n="outputLangLabel">输出</span>
+              <div class="settings-section">
+                <span class="settings-label" data-i18n="outputLangLabel">输出</span>
                 <div class="lang-toggle" id="outputLangToggle">
                   <button class="lang-toggle-btn active" data-lang="zh" type="button">中</button>
                   <button class="lang-toggle-btn" data-lang="en" type="button">EN</button>
                 </div>
               </div>
+              <div class="settings-divider"></div>
+              <button id="settingsClearCacheBtn" class="topbar-dropdown-item" type="button">清除缓存</button>
+              <div class="settings-timestamp" id="settingsTimestamp"></div>
             </div>
           </div>
-          <button id="toggleLayoutBtn" class="topbar-icon-btn" type="button" data-i18n-tooltip="cardManagement" data-tooltip="卡片管理">
-            <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zm-9 9h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
-          </button>
         </div>
       </div>
       <div class="layout2-body">
-        <div class="layout2-canvas-scroll" id="canvasScroll">
-          <div class="layout2-canvas" id="canvasArea" tabindex="0">
-            <svg class="canvas-arrows" id="canvasArrows">
-              <defs>
-                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse">
-                  <polygon points="0 0, 8 4, 0 8" fill="#6c757d" />
-                </marker>
-              </defs>
-            </svg>
-            <div class="canvas-nodes" id="canvasNodes"></div>
+        <section id="notice" class="notice hidden" aria-live="polite">
+          <p id="noticeText"></p>
+          <label for="manualFile" class="manual-load-btn hidden" data-i18n="selectLocalFile">选择本地 skills.md</label>
+          <input id="manualFile" type="file" accept=".md,text/markdown" class="hidden" />
+        </section>
+        <div class="layout2-main">
+          <div class="layout2-canvas-scroll" id="canvasScroll">
+            <div class="layout2-canvas" id="canvasArea" tabindex="0">
+              <svg class="canvas-arrows" id="canvasArrows">
+                <defs>
+                  <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+                    <polygon points="0 0, 8 4, 0 8" fill="#6c757d" />
+                  </marker>
+                </defs>
+              </svg>
+              <div class="canvas-nodes" id="canvasNodes"></div>
+            </div>
           </div>
+          <div class="layout2-drawer" id="canvasDrawer"></div>
         </div>
-        <div class="layout2-drawer" id="canvasDrawer"></div>
       </div>
     </div>
 
@@ -201,6 +156,7 @@
     <div id="apiConfigModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="apiConfigTitle">
       <div id="apiConfigMask" class="modal-mask"></div>
       <section class="modal-panel">
+        <button class="modal-close-x" id="apiConfigCloseX" type="button" aria-label="关闭">&times;</button>
         <h3 id="apiConfigTitle" data-i18n="apiConfigTitle">API 配置</h3>
         <div class="api-settings-body">
           <label>
@@ -226,13 +182,14 @@
           </label>
           <label>
             <span data-i18n="model">模型</span>
-            <input id="apiModelInput" type="text" placeholder="deepseek-chat" />
+            <input id="apiModelInput" type="text" />
           </label>
+          <div class="api-test-row">
+            <button id="apiTestBtn" type="button">测试连接</button>
+            <span id="apiTestStatus" class="meta-status"></span>
+          </div>
           <button id="apiSaveBtn" type="button" data-i18n="saveSettings">保存设置</button>
           <span id="apiStatusText" class="meta-status"></span>
-        </div>
-        <div class="add-form-actions">
-          <button id="apiConfigCloseBtn" type="button" data-i18n="close">关闭</button>
         </div>
       </section>
     </div>
@@ -370,7 +327,6 @@
         <header class="card-head">
           <div class="card-head-top">
             <h2 class="card-title"></h2>
-            <span class="card-usage cnode-usage"></span>
             <div class="card-icon-actions">
               <button class="icon-btn edit-btn" type="button" data-i18n-tooltip="editCard" aria-label="Edit Card" title="Edit Card">
                 <svg viewBox="0 0 24 24" aria-hidden="true">

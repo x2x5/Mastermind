@@ -30,9 +30,61 @@ const CanvasApp = (() => {
   // Drawer drag state
   let drawerDrag = null;
 
+  // Undo / Redo
+  const undoStack = [];
+  const redoStack = [];
+  const MAX_UNDO = 50;
+
+  // Clipboard for card copy/paste
+  let clipboard = null;
+
+  function saveUndo() {
+    undoStack.push(JSON.stringify({ nodes, edges, nextId }));
+    if (undoStack.length > MAX_UNDO) undoStack.shift();
+    redoStack.length = 0;
+    updateUndoRedoBtns();
+  }
+
+  function undo() {
+    if (!undoStack.length) return;
+    redoStack.push(JSON.stringify({ nodes, edges, nextId }));
+    const snap = JSON.parse(undoStack.pop());
+    nodes = snap.nodes; edges = snap.edges; nextId = snap.nextId;
+    selectedNodeId = null; selectedEdgeId = null;
+    render(); write();
+    updateUndoRedoBtns();
+  }
+
+  function redo() {
+    if (!redoStack.length) return;
+    undoStack.push(JSON.stringify({ nodes, edges, nextId }));
+    const snap = JSON.parse(redoStack.pop());
+    nodes = snap.nodes; edges = snap.edges; nextId = snap.nextId;
+    selectedNodeId = null; selectedEdgeId = null;
+    render(); write();
+    updateUndoRedoBtns();
+  }
+
+  function updateUndoRedoBtns() {
+    const ub = document.getElementById("undoBtn");
+    const rb = document.getElementById("redoBtn");
+    const ubadge = document.getElementById("undoBadge");
+    const rbadge = document.getElementById("redoBadge");
+    if (ub) ub.disabled = !undoStack.length;
+    if (rb) rb.disabled = !redoStack.length;
+    if (ubadge) {
+      ubadge.textContent = undoStack.length || "";
+      ubadge.classList.toggle("visible", undoStack.length > 0);
+    }
+    if (rbadge) {
+      rbadge.textContent = redoStack.length || "";
+      rbadge.classList.toggle("visible", redoStack.length > 0);
+    }
+  }
+
   // ── Init ──
 
-  function init(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash) {
+  function init(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard) {
     if (!canvasEl) return;
     const firstInit = !inited;
     if (!inited) {
@@ -43,14 +95,16 @@ const CanvasApp = (() => {
       bindCanvasInteraction();
       bindDrawerDrag();
       bindKeyboard();
+      // Wire up undo/redo buttons
+      const undoBtn = document.getElementById("undoBtn");
+      const redoBtn = document.getElementById("redoBtn");
+      if (undoBtn) undoBtn.addEventListener("click", undo);
+      if (redoBtn) redoBtn.addEventListener("click", redo);
       inited = true;
     }
     ensureStartEndNodes();
-    buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash);
+    buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard);
     render();
-    if (firstInit && nodes.length > 0) {
-      autoLayout();
-    }
   }
 
   // ── State ──
@@ -110,14 +164,16 @@ const CanvasApp = (() => {
       if (n.y + h > maxY) maxY = n.y + h;
     });
 
-    // Shift all nodes if any have negative coordinates
+    // Shift non-start nodes only if they go negative
     let shiftX = 0, shiftY = 0;
-    if (minX < CANVAS_PAD || minY < CANVAS_PAD) {
-      shiftX = minX < CANVAS_PAD ? CANVAS_PAD - minX : 0;
-      shiftY = minY < CANVAS_PAD ? CANVAS_PAD - minY : 0;
-      nodes.forEach((n) => { n.x += shiftX; n.y += shiftY; });
-      // Update DOM positions
-      nodes.forEach((n) => {
+    const nonStartNodes = nodes.filter((n) => n.cardId !== "__start__");
+    const nsMinX = nonStartNodes.length > 0 ? Math.min(...nonStartNodes.map((n) => n.x)) : Infinity;
+    const nsMinY = nonStartNodes.length > 0 ? Math.min(...nonStartNodes.map((n) => n.y)) : Infinity;
+    if (nsMinX < 0 || nsMinY < 0) {
+      shiftX = nsMinX < 0 ? -nsMinX : 0;
+      shiftY = nsMinY < 0 ? -nsMinY : 0;
+      nonStartNodes.forEach((n) => { n.x += shiftX; n.y += shiftY; });
+      nonStartNodes.forEach((n) => {
         const el = nodesEl.querySelector(`[data-node-id="${n.id}"]`);
         if (el) { el.style.left = n.x + "px"; el.style.top = n.y + "px"; }
       });
@@ -126,8 +182,9 @@ const CanvasApp = (() => {
       write();
     }
 
-    const w = Math.max(vw, maxX + CANVAS_PAD);
-    const h = Math.max(vh, maxY + CANVAS_PAD);
+    const pad = 40;
+    const w = Math.max(vw, maxX + pad);
+    const h = Math.max(vh, maxY + pad);
     canvasEl.style.width = w + "px";
     canvasEl.style.height = h + "px";
     return { shiftX, shiftY };
@@ -146,42 +203,52 @@ const CanvasApp = (() => {
   }
 
   function buildNodeEl(n) {
-    // Start/End nodes: card-shaped with title
-    if (n.cardId === "__start__" || n.cardId === "__end__") {
-      const isStart = n.cardId === "__start__";
+    // Start node: lightbulb with play button
+    if (n.cardId === "__start__") {
       const el = document.createElement("div");
-      el.className = "cnode " + (isStart ? "cnode-start" : "cnode-end");
+      el.className = "cnode cnode-start";
       if (n.id === selectedNodeId) el.classList.add("selected");
       el.dataset.nodeId = n.id;
       el.style.cssText = `left:${n.x}px;top:${n.y}px;`;
 
-      // Connectors
-      ["top", "bottom"].forEach((side) => {
-        const c = document.createElement("div");
-        c.className = "cnode-connector cnode-conn-" + side;
-        c.dataset.nodeId = n.id;
-        c.dataset.side = side;
-        el.appendChild(c);
+      // Connectors (bottom only — start only goes downward)
+      const c = document.createElement("div");
+      c.className = "cnode-connector cnode-conn-bottom";
+      c.dataset.nodeId = n.id;
+      c.dataset.side = "bottom";
+      el.appendChild(c);
+
+      // Lightbulb icon
+      const bulb = document.createElement("div");
+      bulb.className = "cnode-bulb";
+      bulb.innerHTML = `<svg viewBox="0 0 24 24" class="bulb-svg"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>`;
+      el.appendChild(bulb);
+
+      // Play button (top-right corner)
+      const playBtn = document.createElement("button");
+      playBtn.className = "cnode-start-play";
+      playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      playBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (typeof runPipelineFromStart === "function") runPipelineFromStart();
+      });
+      el.appendChild(playBtn);
+
+      // Click to select start node
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".cnode-start-play")) return; // Don't select when clicking play button
+        e.stopPropagation();
+        selectNode(n.id);
       });
 
-      // Title
-      const title = document.createElement("div");
-      title.className = "cnode-se-title";
-      title.textContent = isStart ? t("startNode") : t("endNode");
-      el.appendChild(title);
+      return el;
+    }
 
-      // Play button (start only)
-      if (isStart) {
-        const playBtn = document.createElement("button");
-        playBtn.className = "cnode-start-play";
-        playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-        playBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          if (typeof runPipelineFromStart === "function") runPipelineFromStart();
-        });
-        el.appendChild(playBtn);
-      }
-
+    // End node: skip (removed)
+    if (n.cardId === "__end__") {
+      const el = document.createElement("div");
+      el.style.display = "none";
+      el.dataset.nodeId = n.id;
       return el;
     }
 
@@ -193,7 +260,6 @@ const CanvasApp = (() => {
     const prompt = card ? card.prompt : "";
     const inputValue = n.inputValue || "";
     const outputValue = n.outputValue || "";
-    const usageCount = (typeof getUsageCount === "function") ? getUsageCount(n.cardId) : 0;
 
     const el = document.createElement("div");
     el.className = "cnode" + (n.id === selectedNodeId ? " selected" : "");
@@ -209,44 +275,29 @@ const CanvasApp = (() => {
       el.appendChild(c);
     });
 
-    // Top bar: stage label on bottom border
-    const topBar = document.createElement("div");
-    topBar.className = "cnode-topbar";
+    // Stage number badge — bottom-right corner
+    const stageBadgeWrap = document.createElement("div");
+    stageBadgeWrap.className = "cnode-stage-badge-wrap";
+    const stageBadge = document.createElement("span");
+    stageBadge.className = "cnode-stage-badge";
+    const stageNum = category ? category.match(/阶段\s*(\d)/) : null;
+    stageBadge.textContent = stageNum ? stageNum[1] : "";
     if (stageColor) {
-      topBar.style.setProperty("--stage-color", stageColor);
+      stageBadge.style.background = stageColor;
     }
-    const stageLabel = document.createElement("span");
-    stageLabel.className = "cnode-stage-label";
-    // Translate stage name if it's a known stage
-    const stageI18nMap = {
-      "阶段 1：调研选题": "stage1",
-      "阶段 2：构思 Idea": "stage2",
-      "阶段 3：设计方法": "stage3",
-      "阶段 4：执行实验": "stage4",
-      "阶段 5：写论文": "stage5",
-      "阶段 6：审稿修改": "stage6",
-      "阶段 7：准备投稿": "stage7",
-    };
-    const i18nKey = stageI18nMap[category];
-    stageLabel.textContent = i18nKey ? t(i18nKey) : (category || t("uncategorized"));
-    if (stageColor) {
-      stageLabel.style.color = stageColor;
-    }
-    topBar.append(stageLabel);
+    stageBadgeWrap.append(stageBadge);
 
-    // Usage badge — top-right corner
-    const usageBadge = document.createElement("span");
-    usageBadge.className = "cnode-usage";
-    if (usageCount > 0) {
-      usageBadge.textContent = usageCount;
-    } else {
-      usageBadge.style.display = "none";
-    }
+    // Title row (title + subtitle inline)
+    const titleRow = document.createElement("div");
+    titleRow.className = "cnode-title-row";
 
-    // Title
     const titleEl = document.createElement("div");
     titleEl.className = "cnode-title";
     titleEl.textContent = title;
+
+    // Error message next to title
+    const titleError = document.createElement("span");
+    titleError.className = "cnode-title-error";
 
     // Subtitle (editable note)
     const subtitleEl = document.createElement("div");
@@ -308,22 +359,56 @@ const CanvasApp = (() => {
       el.style.zIndex = isOpen ? 50 : "";
     });
 
-    // Row 1: [查看模板] [复制输入]
+    // Row 1: [▷ Play] [复制输入] [查看模板]
     const inputActions = document.createElement("div");
     inputActions.className = "cnode-actions";
 
+    // Play / generate button (corner badge, top-right)
+    const playBtn = document.createElement("button");
+    playBtn.className = "cnode-play-badge";
+    playBtn.type = "button";
+    playBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+    playBtn.addEventListener("mousedown", (e) => e.stopPropagation());
+    playBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      if (playBtn.classList.contains("running")) return;
+      // Collect outputs from parent cards
+      const parentEdges = edges.filter((ed) => ed.to === n.id);
+      if (parentEdges.length > 0) {
+        const parts = [];
+        for (const pe of parentEdges) {
+          const parentNode = nodes.find((nd) => nd.id === pe.from);
+          if (parentNode && parentNode.outputValue) {
+            const parentCard = allItemsMap.get(parentNode.cardId);
+            const parentTitle = parentCard ? parentCard.title : parentNode.cardId;
+            const outLabel = typeof t === "function" ? `【${parentTitle}】的输出：\n` : `Output from [${parentTitle}]:\n`;
+            parts.push(`${outLabel}${parentNode.outputValue}`);
+          }
+        }
+        if (parts.length > 0) {
+          textarea.value = parts.join("\n\n" + "─".repeat(30) + "\n\n");
+          n.inputValue = textarea.value;
+          write();
+        }
+      }
+      // Check if input is empty
+      if (!textarea.value.trim()) {
+        titleError.textContent = typeof t === "function" ? t("inputEmpty") : "输入为空";
+        titleError.className = "cnode-title-error visible";
+        setTimeout(() => { titleError.className = "cnode-title-error"; }, 3000);
+        return;
+      }
+      titleError.className = "cnode-title-error";
+      await handleNodeApiCall(n, prompt, textarea, outputArea, playBtn, statusEl, copyOutIcon);
+    });
+
     const copyInputBtn = document.createElement("button");
-    copyInputBtn.className = "cnode-copy-btn";
+    copyInputBtn.className = "cnode-copy-btn cnode-copy-input-btn";
     copyInputBtn.type = "button";
     copyInputBtn.textContent = t("copyInput");
     copyInputBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const merged = mergePromptAndInput(prompt, textarea.value);
-      if (textarea.value.trim()) {
-        const nextCount = incrementUsageCount(n.cardId, { skipRender: true });
-        usageBadge.textContent = nextCount;
-        usageBadge.style.display = "";
-      }
       navigator.clipboard.writeText(merged).then(() => {
         copyInputBtn.textContent = t("copied");
         setTimeout(() => { copyInputBtn.textContent = t("copyInput"); }, 1500);
@@ -336,10 +421,9 @@ const CanvasApp = (() => {
 
     inputActions.append(previewToggle, copyInputBtn);
 
-    // Output area
-    const outputLabel = document.createElement("div");
-    outputLabel.className = "cnode-output-label";
-    outputLabel.textContent = t("outputLabel");
+    // Output area (wrapper for positioning copy icon)
+    const outputWrap = document.createElement("div");
+    outputWrap.className = "cnode-output-wrap";
 
     const outputArea = document.createElement("textarea");
     outputArea.className = "cnode-textarea cnode-output";
@@ -351,43 +435,39 @@ const CanvasApp = (() => {
     });
     outputArea.addEventListener("mousedown", (e) => e.stopPropagation());
 
-    // Row 2: [生成输出] [复制输出]
-    const outputActions = document.createElement("div");
-    outputActions.className = "cnode-actions";
-
-    const apiBtn = document.createElement("button");
-    apiBtn.className = "cnode-copy-btn cnode-api-btn";
-    apiBtn.type = "button";
-    apiBtn.textContent = t("genOutput");
-    apiBtn.addEventListener("click", async (e) => {
+    // Copy output icon (appears after generation)
+    const copyOutIcon = document.createElement("button");
+    copyOutIcon.className = "cnode-copy-out-icon" + (outputValue ? " visible" : "");
+    copyOutIcon.type = "button";
+    copyOutIcon.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+    copyOutIcon.addEventListener("mousedown", (e) => e.stopPropagation());
+    copyOutIcon.addEventListener("click", (e) => {
       e.stopPropagation();
-      await handleNodeApiCall(n, prompt, textarea, outputArea, apiBtn, statusEl);
-    });
-    apiBtn.addEventListener("mousedown", (e) => e.stopPropagation());
-
-    const copyOutputBtn = document.createElement("button");
-    copyOutputBtn.className = "cnode-copy-btn";
-    copyOutputBtn.type = "button";
-    copyOutputBtn.textContent = t("copyOutput");
-    copyOutputBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
+      if (!outputArea.value) return;
       navigator.clipboard.writeText(outputArea.value).then(() => {
-        copyOutputBtn.textContent = t("copied");
-        setTimeout(() => { copyOutputBtn.textContent = t("copyOutput"); }, 1500);
-      }).catch(() => {
-        copyOutputBtn.textContent = t("copyFailed");
-        setTimeout(() => { copyOutputBtn.textContent = t("copyOutput"); }, 1500);
+        copyOutIcon.classList.add("copied");
+        setTimeout(() => copyOutIcon.classList.remove("copied"), 1500);
       });
     });
-    copyOutputBtn.addEventListener("mousedown", (e) => e.stopPropagation());
 
-    outputActions.append(apiBtn, copyOutputBtn);
+    outputWrap.append(outputArea, copyOutIcon);
 
     // Status
     const statusEl = document.createElement("div");
     statusEl.className = "cnode-status";
 
-    el.append(titleEl, subtitleEl, textarea, inputActions, preview, outputLabel, outputArea, outputActions, statusEl, topBar, usageBadge);
+    titleRow.append(titleEl, titleError);
+    el.append(titleRow, subtitleEl, textarea, inputActions, preview, outputWrap, statusEl, stageBadgeWrap, playBtn);
+
+    // Click to select the node (backup for cases where mousedown handler is bypassed)
+    el.addEventListener("click", (e) => {
+      if (e.target.closest("button") || e.target.closest("textarea") || e.target.closest("input")) {
+        // Still select the node; child handlers that want to avoid this should call stopPropagation
+        selectNode(n.id);
+        return;
+      }
+      selectNode(n.id);
+    });
 
     return el;
   }
@@ -458,18 +538,23 @@ const CanvasApp = (() => {
     if (!canvasEl) return;
 
     canvasEl.addEventListener("mousedown", (e) => {
-      const conn = e.target.closest(".cnode-connector");
+      // Check for connector — use elementsFromPoint to find it even behind SVG layer
+      const allEls = document.elementsFromPoint(e.clientX, e.clientY);
+      const conn = allEls.find((el) => el.closest(".cnode-connector"));
       if (conn) {
-        startEdgeDraw(conn, e);
+        startEdgeDraw(conn.closest(".cnode-connector"), e);
         return;
       }
-      // Don't start drag when clicking on interactive elements inside nodes
-      if (e.target.closest("textarea") || e.target.closest("input") || e.target.closest("button")) {
-        return;
-      }
+      // Don't start drag when clicking on interactive elements inside nodes,
+      // but still select the node.
       const nodeEl = e.target.closest(".cnode");
       if (nodeEl) {
-        startNodeDrag(nodeEl, e);
+        const isInteractive = e.target.closest("textarea") || e.target.closest("input") || e.target.closest("button");
+        if (!isInteractive) {
+          startNodeDrag(nodeEl, e);
+        } else {
+          selectNode(nodeEl.dataset.nodeId);
+        }
         return;
       }
       // Edge handle drag
@@ -500,61 +585,45 @@ const CanvasApp = (() => {
       if (drawerDrag) drawerDragEnd(e);
     });
 
-    // Edge click / canvas click
-    canvasEl.addEventListener("click", (e) => {
-      // Don't steal focus from interactive elements inside nodes
-      if (e.target.closest("textarea") || e.target.closest("input") || e.target.closest("button")) {
-        return;
-      }
+    // SVG has pointer-events: auto (z-index 2), so it intercepts all canvas clicks.
+    // Handle edges directly; for nodes/empty canvas, use elementFromPoint.
+    function findElementBelow(x, y) {
+      arrowsEl.style.pointerEvents = "none";
+      const el = document.elementFromPoint(x, y);
+      arrowsEl.style.pointerEvents = "";
+      return el;
+    }
 
-      const rect = canvasEl.getBoundingClientRect();
-      const cx = e.clientX - rect.left + canvasEl.scrollLeft;
-      const cy = e.clientY - rect.top + canvasEl.scrollTop;
+    arrowsEl.addEventListener("click", (e) => {
+      if (e.target.closest("textarea") || e.target.closest("input") || e.target.closest("button")) return;
 
-      // Check if click is near any edge line (prioritize edge over node)
-      const EDGE_SNAP = 12;
-      let closestEdge = null, closestEdgeDist = Infinity;
-      edges.forEach((ed) => {
-        const from = nodes.find((n) => n.id === ed.from);
-        const to = nodes.find((n) => n.id === ed.to);
-        if (!from || !to) return;
-        const p1 = getConnectorPos(from, ed.fromSide || "bottom");
-        const p2 = getConnectorPos(to, ed.toSide || "top");
-        // Approximate: distance to line segment
-        const dx = p2.x - p1.x, dy = p2.y - p1.y;
-        const lenSq = dx * dx + dy * dy;
-        let t = lenSq > 0 ? ((cx - p1.x) * dx + (cy - p1.y) * dy) / lenSq : 0;
-        t = Math.max(0, Math.min(1, t));
-        const px = p1.x + t * dx, py = p1.y + t * dy;
-        const dist = Math.hypot(cx - px, cy - py);
-        if (dist < closestEdgeDist) { closestEdgeDist = dist; closestEdge = ed; }
-      });
-
-      // Also check if directly on an SVG edge element
+      // Check if clicking an edge
       const edgeEl = e.target.closest("[data-edge-id]");
-      const onSvgEdge = edgeEl && arrowsEl.contains(edgeEl);
-
-      if (onSvgEdge || (closestEdge && closestEdgeDist < EDGE_SNAP)) {
+      if (edgeEl && arrowsEl.contains(edgeEl)) {
         e.stopPropagation();
-        selectEdge(onSvgEdge ? edgeEl.dataset.edgeId : closestEdge.id);
+        selectEdge(edgeEl.dataset.edgeId);
         return;
       }
 
-      const nodeEl = e.target.closest(".cnode");
+      // Not an edge — find what's beneath the SVG
+      const below = findElementBelow(e.clientX, e.clientY);
+      if (!below) { clearSelection(); return; }
+
+      const nodeEl = below.closest(".cnode");
       if (nodeEl) {
         e.stopPropagation();
         selectNode(nodeEl.dataset.nodeId);
         canvasEl.focus();
         return;
       }
-      if (e.target.closest(".cedge-handle")) return; // don't clear when clicking handles
-      // Click on empty canvas → clear selection
+      if (below.closest(".cedge-handle")) return;
       clearSelection();
     });
 
-    // Canvas focus
+    // Mousedown for focus — also needs to check through SVG
     canvasEl.addEventListener("mousedown", (e) => {
-      if (!e.target.closest(".cnode")) canvasEl.focus();
+      if (e.target.closest("textarea") || e.target.closest("input") || e.target.closest("button")) return;
+      canvasEl.focus();
     });
   }
 
@@ -562,7 +631,7 @@ const CanvasApp = (() => {
 
   function startNodeDrag(nodeEl, e) {
     const n = nodes.find((nd) => nd.id === nodeEl.dataset.nodeId);
-    if (!n) return;
+    if (!n || n.cardId === "__start__") return;
     e.preventDefault();
     selectNode(n.id);
     dragState = {
@@ -619,12 +688,13 @@ const CanvasApp = (() => {
 
   function tryAutoInsertOnEdge(dropped) {
     const startNode = nodes.find((n) => n.cardId === "__start__");
-    const endNode = nodes.find((n) => n.cardId === "__end__");
-    if (!startNode || !endNode) return;
+    if (!startNode) return;
 
-    // Find start→end edge
-    const seIdx = edges.findIndex((e) => e.from === startNode.id && e.to === endNode.id);
+    // Find an edge from start to a regular card
+    const seIdx = edges.findIndex((e) => e.from === startNode.id);
     if (seIdx < 0) return;
+    const targetNode = nodes.find((n) => n.id === edges[seIdx].to);
+    if (!targetNode) return;
 
     const getPos = (node, side) => {
       const el = nodesEl.querySelector(`[data-node-id="${node.id}"]`);
@@ -635,7 +705,7 @@ const CanvasApp = (() => {
     };
 
     const p1 = getPos(startNode, "bottom");
-    const p2 = getPos(endNode, "top");
+    const p2 = getPos(targetNode, "top");
 
     // Dropped card center
     const el = nodesEl.querySelector(`[data-node-id="${dropped.id}"]`);
@@ -655,7 +725,7 @@ const CanvasApp = (() => {
     if (dist < 80) {
       edges.splice(seIdx, 1);
       edges.push({ id: "e" + nextId++, from: startNode.id, fromSide: "bottom", to: dropped.id, toSide: "top" });
-      edges.push({ id: "e" + nextId++, from: dropped.id, fromSide: "bottom", to: endNode.id, toSide: "top" });
+      edges.push({ id: "e" + nextId++, from: dropped.id, fromSide: "bottom", to: targetNode.id, toSide: "top" });
       refreshEdges();
     }
   }
@@ -759,6 +829,7 @@ const CanvasApp = (() => {
       return;
     }
     const edge = { id: "e" + nextId++, from: d.fromId, fromSide: d.fromSide, to: toId, toSide };
+    saveUndo();
     edges.push(edge);
     write();
     refreshEdges();
@@ -799,10 +870,7 @@ const CanvasApp = (() => {
     line.setAttribute("class", "ctemp-handle-line");
     arrowsEl.appendChild(line);
 
-    const edgeGroup = arrowsEl.querySelector(`g[data-edge-id="${edgeId}"]`);
-    if (edgeGroup) edgeGroup.style.display = "none";
-
-    dragState = { type: "edgeHandle", edgeId, end, line, origEdge: { ...edge } };
+    dragState = { type: "edgeHandle", edgeId, end, line, origEdge: { ...edge }, moved: false, startX: e.clientX, startY: e.clientY };
   }
 
   // ── Edge handle drag (reconnect endpoints) ──
@@ -830,16 +898,20 @@ const CanvasApp = (() => {
     line.setAttribute("class", "ctemp-handle-line");
     arrowsEl.appendChild(line);
 
-    // Hide the edge group being dragged
-    const edgeGroup = arrowsEl.querySelector(`g[data-edge-id="${edgeId}"]`);
-    if (edgeGroup) edgeGroup.style.display = "none";
-
-    dragState = { type: "edgeHandle", edgeId, end, line, origEdge: { ...edge } };
+    dragState = { type: "edgeHandle", edgeId, end, line, origEdge: { ...edge }, moved: false, startX: e.clientX, startY: e.clientY };
   }
 
   function edgeHandleDragMove(e) {
     const d = dragState;
     if (!d || d.type !== "edgeHandle") return;
+
+    // Hide original edge group on first real move so pure clicks still work
+    if (!d.moved) {
+      d.moved = true;
+      const edgeGroup = arrowsEl.querySelector(`g[data-edge-id="${d.edgeId}"]`);
+      if (edgeGroup) edgeGroup.style.display = "none";
+    }
+
     const rect = canvasEl.getBoundingClientRect();
     const x = e.clientX - rect.left + canvasEl.scrollLeft;
     const y = e.clientY - rect.top + canvasEl.scrollTop;
@@ -878,6 +950,15 @@ const CanvasApp = (() => {
     const edge = edges.find((ed) => ed.id === d.edgeId);
     if (!edge) { dragState = null; return; }
 
+    // If it was just a click (barely moved), select the edge instead of dragging
+    const dx = e.clientX - (d.startX || e.clientX);
+    const dy = e.clientY - (d.startY || e.clientY);
+    if (!d.moved || Math.hypot(dx, dy) < 3) {
+      selectEdge(d.edgeId);
+      dragState = null;
+      return;
+    }
+
     // Prefer magnetic snap target, otherwise elementFromPoint
     let targetNode = d.snapTarget || null;
     if (!targetNode) {
@@ -889,6 +970,7 @@ const CanvasApp = (() => {
     }
 
     if (targetNode) {
+      saveUndo();
       if (d.end === "from" && targetNode.id !== edge.to) {
         if (!edges.some((ed) => ed.id !== d.edgeId && ed.from === targetNode.id && ed.to === edge.to)) {
           edge.from = targetNode.id;
@@ -920,6 +1002,8 @@ const CanvasApp = (() => {
   function bindDrawerDrag() {
     if (!drawerRoot) return;
     drawerRoot.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".cdrawer-item-edit")) return;
+      if (e.target.closest("[contenteditable='true']")) return;
       const item = e.target.closest(".cdrawer-item");
       if (!item) return;
       e.preventDefault();
@@ -955,11 +1039,85 @@ const CanvasApp = (() => {
       const y = e.clientY - rect.top + canvasEl.scrollTop - 32;
       addNode(d.cardId, x, y);
     } else {
-      // Click without drag → spawn at visible canvas center
-      const pos = getVisibleCanvasCenter();
-      addNode(d.cardId, pos.x, pos.y);
+      spawnCardNode(d.cardId);
     }
     drawerDrag = null;
+  }
+
+  function spawnCardNode(cardId) {
+    saveUndo();
+
+    let fromNode = null;
+    if (selectedNodeId) {
+      fromNode = nodes.find((n) => n.id === selectedNodeId);
+    }
+    if (!fromNode) {
+      const otherNodes = nodes.filter((n) => n.cardId !== "__start__" && n.cardId !== "__end__");
+      if (otherNodes.length > 0) {
+        fromNode = otherNodes[0];
+        otherNodes.forEach((n) => { if (n.y > fromNode.y) fromNode = n; });
+      }
+    }
+    if (!fromNode) {
+      fromNode = nodes.find((n) => n.cardId === "__start__");
+    }
+
+    const pos = computeSpawnPosition(fromNode);
+    const newNode = { id: "n" + nextId++, cardId, x: pos.x, y: pos.y, subtitle: "" };
+    nodes.push(newNode);
+    nodesEl.appendChild(buildNodeEl(newNode));
+
+    if (fromNode) {
+      edges.push({ id: "e" + nextId++, from: fromNode.id, fromSide: "bottom", to: newNode.id, toSide: "top" });
+    }
+
+    write();
+    resizeCanvas();
+    refreshEdges();
+  }
+
+  function computeSpawnPosition(fromNode) {
+    const GAP_X = 60;
+    const GAP_Y = 80;
+    const NODE_W = 260;
+    const NODE_H = 180;
+
+    if (!fromNode) {
+      return { x: 100, y: 100 };
+    }
+
+    const fromEl = nodesEl.querySelector(`[data-node-id="${fromNode.id}"]`);
+    const fromW = fromEl ? fromEl.offsetWidth : NODE_W;
+    const fromH = fromEl ? fromEl.offsetHeight : NODE_H;
+
+    const childEdges = edges.filter((e) => e.from === fromNode.id);
+    const childIds = childEdges.map((e) => e.to);
+
+    if (childIds.length === 0) {
+      return { x: fromNode.x, y: fromNode.y + fromH + GAP_Y };
+    }
+
+    let rightmostNode = null;
+    let rightmostRight = -Infinity;
+    for (const childId of childIds) {
+      const child = nodes.find((n) => n.id === childId);
+      if (!child) continue;
+      const childEl = nodesEl.querySelector(`[data-node-id="${childId}"]`);
+      const childW = childEl ? childEl.offsetWidth : NODE_W;
+      const childRight = child.x + childW;
+      if (childRight > rightmostRight) {
+        rightmostRight = childRight;
+        rightmostNode = child;
+      }
+    }
+
+    if (!rightmostNode) {
+      return { x: fromNode.x, y: fromNode.y + fromH + GAP_Y };
+    }
+
+    const rightmostEl = nodesEl.querySelector(`[data-node-id="${rightmostNode.id}"]`);
+    const rightmostW = rightmostEl ? rightmostEl.offsetWidth : NODE_W;
+    return { x: rightmostNode.x + rightmostW + GAP_X, y: rightmostNode.y };
   }
 
   // ── Selection ──
@@ -1024,10 +1182,49 @@ const CanvasApp = (() => {
     document.addEventListener("keydown", (e) => {
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
       if (document.getElementById("layout2").classList.contains("hidden")) return;
+
+      const mod = e.metaKey || e.ctrlKey;
+
+      // Cmd+Z = undo, Cmd+Shift+Z = redo
+      if (mod && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+        return;
+      }
+
+      // Cmd+C = copy selected card
+      if (mod && e.key === "c" && selectedNodeId) {
+        const n = nodes.find((nd) => nd.id === selectedNodeId);
+        if (n && n.cardId !== "__start__" && n.cardId !== "__end__") {
+          clipboard = { cardId: n.cardId, subtitle: n.subtitle, inputValue: n.inputValue, outputValue: n.outputValue };
+        }
+        return;
+      }
+
+      // Cmd+V = paste card
+      if (mod && e.key === "v" && clipboard) {
+        e.preventDefault();
+        saveUndo();
+        // Position near the original copied card, offset by 30px
+        const orig = nodes.find((nd) => nd.cardId === clipboard.cardId);
+        const x = orig ? orig.x + 30 : 100;
+        const y = orig ? orig.y + 30 : 100;
+        const node = { id: "n" + nextId++, cardId: clipboard.cardId, x, y, subtitle: clipboard.subtitle, inputValue: clipboard.inputValue, outputValue: clipboard.outputValue };
+        nodes.push(node);
+        nodesEl.appendChild(buildNodeEl(node));
+        selectNode(node.id);
+        write();
+        render();
+        return;
+      }
+
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedNodeId) {
+          const n = nodes.find((nd) => nd.id === selectedNodeId);
+          if (n && (n.cardId === "__start__" || n.cardId === "__end__")) return; // protect start/end
           e.preventDefault();
-          nodes = nodes.filter((n) => n.id !== selectedNodeId);
+          saveUndo();
+          nodes = nodes.filter((nd) => nd.id !== selectedNodeId);
           edges = edges.filter((ed) => ed.from !== selectedNodeId && ed.to !== selectedNodeId);
           const el = nodesEl.querySelector(`[data-node-id="${selectedNodeId}"]`);
           if (el) el.remove();
@@ -1036,6 +1233,7 @@ const CanvasApp = (() => {
           refreshEdges();
         } else if (selectedEdgeId) {
           e.preventDefault();
+          saveUndo();
           edges = edges.filter((ed) => ed.id !== selectedEdgeId);
           selectedEdgeId = null;
           write();
@@ -1049,40 +1247,24 @@ const CanvasApp = (() => {
 
   function ensureStartEndNodes() {
     const hasStart = nodes.some((n) => n.cardId === "__start__");
-    const hasEnd = nodes.some((n) => n.cardId === "__end__");
 
     if (!hasStart) {
-      nodes.push({ id: "n" + nextId++, cardId: "__start__", x: CANVAS_PAD, y: CANVAS_PAD, subtitle: "" });
-    }
-    if (!hasEnd) {
-      nodes.push({ id: "n" + nextId++, cardId: "__end__", x: CANVAS_PAD, y: CANVAS_PAD + 180, subtitle: "" });
+      nodes.push({ id: "n" + nextId++, cardId: "__start__", x: 16, y: 16, subtitle: "" });
     }
 
-    const startNode = nodes.find((n) => n.cardId === "__start__");
-    const endNode = nodes.find((n) => n.cardId === "__end__");
-    if (!startNode || !endNode) return;
-
-    const hasEdge = (fromId, toId) => edges.some((e) => e.from === fromId && e.to === toId);
-    const hasOutgoing = new Set();
-    edges.forEach((e) => hasOutgoing.add(e.from));
-
-    // Connect leaf nodes (no outgoing) to end
-    nodes.forEach((n) => {
-      if (n.cardId === "__start__" || n.cardId === "__end__") return;
-      if (!hasOutgoing.has(n.id) && !hasEdge(n.id, endNode.id)) {
-        edges.push({ id: "e" + nextId++, from: n.id, fromSide: "bottom", to: endNode.id, toSide: "top" });
-      }
-    });
-
-    // If start has no outgoing edges, connect to end
-    if (!hasOutgoing.has(startNode.id) && !hasEdge(startNode.id, endNode.id)) {
-      edges.push({ id: "e" + nextId++, from: startNode.id, fromSide: "bottom", to: endNode.id, toSide: "top" });
+    // Remove any legacy end nodes and edges to them
+    const endNodes = nodes.filter((n) => n.cardId === "__end__");
+    if (endNodes.length > 0) {
+      const endIds = new Set(endNodes.map((n) => n.id));
+      edges = edges.filter((e) => !endIds.has(e.to));
+      nodes = nodes.filter((n) => n.cardId !== "__end__");
     }
   }
 
   // ── Add / Clear ──
 
   function addNode(cardId, x, y) {
+    saveUndo();
     const node = { id: "n" + nextId++, cardId, x: x || 100, y: y || 100, subtitle: "" };
     nodes.push(node);
     nodesEl.appendChild(buildNodeEl(node));
@@ -1091,6 +1273,7 @@ const CanvasApp = (() => {
   }
 
   function clear() {
+    saveUndo();
     nodes = [];
     edges = [];
     nextId = 1;
@@ -1112,9 +1295,20 @@ const CanvasApp = (() => {
   let drawerDeleteStageCallback = null;
   let drawerRestoreStageCallback = null;
   let drawerEmptyTrashCallback = null;
+  let drawerRenameStageCallback = null;
+  let drawerRenameCardCallback = null;
 
-  function buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash) {
+  function buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard) {
     if (!drawerRoot) return;
+    // Save which stages are open
+    const openStages = new Set();
+    drawerRoot.querySelectorAll("details[open]").forEach((det) => {
+      if (det.dataset.stageId) openStages.add(det.dataset.stageId);
+      else {
+        const sum = det.querySelector("summary span");
+        if (sum) openStages.add(sum.textContent);
+      }
+    });
     drawerRoot.innerHTML = "";
     drawerReorderCallback = onReorder || null;
     drawerAddCardCallback = onAddCard || null;
@@ -1122,6 +1316,8 @@ const CanvasApp = (() => {
     drawerDeleteStageCallback = onDeleteStage || null;
     drawerRestoreStageCallback = onRestoreStage || null;
     drawerEmptyTrashCallback = onEmptyTrash || null;
+    drawerRenameStageCallback = onRenameStage || null;
+    drawerRenameCardCallback = onRenameCard || null;
 
     for (const group of cardsByCategory) {
       const cat = group.name;
@@ -1137,6 +1333,35 @@ const CanvasApp = (() => {
 
       const nameSpan = document.createElement("span");
       nameSpan.textContent = cat;
+
+      if (stageId) {
+        nameSpan.className = "cdrawer-stage-name";
+        nameSpan.addEventListener("dblclick", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          nameSpan.contentEditable = "true";
+          nameSpan.focus();
+          // Select all text
+          const range = document.createRange();
+          range.selectNodeContents(nameSpan);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        });
+        nameSpan.addEventListener("blur", () => {
+          nameSpan.contentEditable = "false";
+          const newName = nameSpan.textContent.trim();
+          if (newName && newName !== cat && drawerRenameStageCallback) {
+            drawerRenameStageCallback(stageId, newName);
+          } else {
+            nameSpan.textContent = cat;
+          }
+        });
+        nameSpan.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") { e.preventDefault(); nameSpan.blur(); }
+          if (e.key === "Escape") { nameSpan.textContent = cat; nameSpan.blur(); }
+        });
+      }
 
       sum.appendChild(nameSpan);
 
@@ -1205,9 +1430,49 @@ const CanvasApp = (() => {
         item.className = "cdrawer-item";
         item.dataset.cardId = card.id;
         const translatedTitle = typeof translateCardTitle === "function" ? translateCardTitle(card.title) : card.title;
-        item.textContent = translatedTitle;
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = translatedTitle;
+        item.appendChild(nameSpan);
+
+        // Pencil button to rename card (custom stages only)
+        if (stageId) {
+          const editBtn = document.createElement("button");
+          editBtn.className = "cdrawer-item-edit";
+          editBtn.type = "button";
+          editBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>';
+          editBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            nameSpan.contentEditable = "true";
+            nameSpan.focus();
+            const range = document.createRange();
+            range.selectNodeContents(nameSpan);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          });
+          nameSpan.addEventListener("blur", () => {
+            nameSpan.contentEditable = "false";
+            const newName = nameSpan.textContent.trim();
+            if (newName && newName !== translatedTitle && drawerRenameCardCallback) {
+              drawerRenameCardCallback(card.id, newName);
+            } else {
+              nameSpan.textContent = translatedTitle;
+            }
+          });
+          nameSpan.addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") { ev.preventDefault(); nameSpan.blur(); }
+            if (ev.key === "Escape") { nameSpan.textContent = translatedTitle; nameSpan.blur(); }
+          });
+          item.appendChild(editBtn);
+        }
+
         det.appendChild(item);
       });
+      // Restore open state
+      const key = stageId || cat;
+      if (openStages.has(key)) det.open = true;
+
       drawerRoot.appendChild(det);
     }
 
@@ -1278,7 +1543,7 @@ const CanvasApp = (() => {
 
   let nodeAbortController = null;
 
-  async function handleNodeApiCall(node, promptTemplate, inputEl, outputEl, btn, statusEl) {
+  async function handleNodeApiCall(node, promptTemplate, inputEl, outputEl, btn, statusEl, copyOutIcon) {
     const cfg = typeof getApiConfig === "function" ? getApiConfig() : null;
     if (!cfg || !cfg.apiKey) {
       statusEl.textContent = t("configApiInPanel");
@@ -1286,16 +1551,45 @@ const CanvasApp = (() => {
       return;
     }
 
-    const userText = inputEl.value.trim();
+    let userText = inputEl.value.trim();
+
+    // Set running state on play button
+    btn.classList.add("running");
+    btn.innerHTML = '<span class="spinner"></span>';
+    btn.disabled = true;
+    outputEl.value = "";
+    if (copyOutIcon) copyOutIcon.classList.remove("visible");
+
+    // Step 1: Detect URL and fetch page content
+    let fetchError = null;
+    const urlMatch = userText.match(/https?:\/\/[^\s]+/);
+    const hasUrl = urlMatch && typeof fetchPageText === "function";
+    if (hasUrl) {
+      statusEl.textContent = "① 正在读取网页...";
+      statusEl.className = "cnode-status";
+      try {
+        const pageText = await fetchPageText(urlMatch[0]);
+        userText = userText + "\n\n以下是网页内容:\n" + pageText;
+        statusEl.textContent = "① 读取完成 (" + pageText.length + "字)";
+        statusEl.className = "cnode-status success";
+      } catch (e) {
+        fetchError = e.message;
+        statusEl.textContent = "① 读取失败: " + fetchError;
+        statusEl.className = "cnode-status error";
+      }
+    }
+
+    // Step 2: Send to AI
     const merged = mergePromptAndInput(promptTemplate, userText);
 
     if (nodeAbortController) nodeAbortController.abort();
     nodeAbortController = new AbortController();
 
-    btn.innerHTML = '<span class="spinner"></span>' + t("generatingSpinner");
-    btn.disabled = true;
-    outputEl.value = "";
-    statusEl.textContent = t("connecting");
+    if (hasUrl && !fetchError) {
+      statusEl.textContent = "② 正在发送给 AI...";
+    } else if (!hasUrl) {
+      statusEl.textContent = t("connecting");
+    }
     statusEl.className = "cnode-status";
 
     try {
@@ -1315,23 +1609,31 @@ const CanvasApp = (() => {
         fullText += text;
         charCount += text.length;
         outputEl.value = fullText;
-        statusEl.textContent = t("generatingWithCount").replace("{count}", charCount);
+        const prefix = hasUrl ? "② " : "";
+        statusEl.textContent = prefix + t("generatingWithCount").replace("{count}", charCount);
         statusEl.className = "cnode-status";
       }, nodeAbortController.signal);
       node.outputValue = fullText;
       write();
       statusEl.textContent = t("doneWithCount").replace("{count}", charCount);
       statusEl.className = "cnode-status success";
+      if (copyOutIcon) copyOutIcon.classList.add("visible");
     } catch (err) {
       if (err.name === "AbortError") {
         statusEl.textContent = t("cancelled");
         statusEl.className = "cnode-status";
       } else {
-        statusEl.textContent = t("genFailed") + err.message;
+        let errMsg = err.message || String(err);
+        if (errMsg.includes("Failed to fetch") || errMsg.includes("Load failed") || errMsg.includes("NetworkError")) {
+          errMsg = "网络连接失败，请检查网络或 API 地址是否正确";
+        }
+        statusEl.textContent = t("genFailed") + errMsg;
         statusEl.className = "cnode-status error";
       }
     } finally {
-      btn.textContent = t("genOutput");
+      // Restore play button
+      btn.classList.remove("running");
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
       btn.disabled = false;
       nodeAbortController = null;
     }
@@ -1346,11 +1648,10 @@ const CanvasApp = (() => {
     const NODE_W = sampleEl ? sampleEl.offsetWidth : 260;
     const NODE_H = sampleEl ? sampleEl.offsetHeight : 180;
     const GAP_X = 50;
-    const GAP_Y = 100;
+    const GAP_Y = 30;
     const PAD = CANVAS_PAD;
 
     const startNode = nodes.find((n) => n.cardId === "__start__");
-    const endNode = nodes.find((n) => n.cardId === "__end__");
     const regularNodes = nodes.filter((n) => n.cardId !== "__start__" && n.cardId !== "__end__");
 
     // Topological sort for regular nodes
@@ -1390,92 +1691,75 @@ const CanvasApp = (() => {
     for (let i = 0; i <= maxRegLayer; i++) regLayers.set(i, []);
     regularNodes.forEach((n) => regLayers.get(layerOf.get(n.id)).push(n));
 
-    // Position regular nodes
-    const maxRowW = Math.max(...[...regLayers.values()].map(r => r.length * NODE_W + (r.length - 1) * GAP_X), NODE_W);
-    const centerX = PAD + maxRowW / 2;
+    // Sort nodes within each layer by parent x position
+    const childParentXs = new Map();
+    edges.forEach((e) => {
+      if (!layerOf.has(e.from) || !layerOf.has(e.to)) return;
+      const fromNode = nodes.find((n) => n.id === e.from);
+      if (!fromNode) return;
+      if (!childParentXs.has(e.to)) childParentXs.set(e.to, []);
+      childParentXs.get(e.to).push(fromNode.x);
+    });
+    for (let i = 0; i <= maxRegLayer; i++) {
+      regLayers.get(i).sort((a, b) => {
+        const ax = childParentXs.has(a.id) ? childParentXs.get(a.id).reduce((s, v) => s + v, 0) / childParentXs.get(a.id).length : a.x;
+        const bx = childParentXs.has(b.id) ? childParentXs.get(b.id).reduce((s, v) => s + v, 0) / childParentXs.get(b.id).length : b.x;
+        return ax - bx;
+      });
+    }
+
+    // Position regular nodes — left-aligned with start node
+    const startX = startNode ? startNode.x : 16;
+    const startY = startNode ? startNode.y : 16;
+    const startH = 56;
+    const startGap = GAP_Y;
     for (let i = 0; i <= maxRegLayer; i++) {
       const row = regLayers.get(i);
       if (row.length === 0) continue;
-      const rowW = row.length * NODE_W + (row.length - 1) * GAP_X;
-      const ox = centerX - rowW / 2;
-      const y = PAD + i * (NODE_H + GAP_Y);
-      row.forEach((n, col) => { n.x = ox + col * (NODE_W + GAP_X); n.y = y; });
+      const y = startY + startH + startGap + i * (NODE_H + GAP_Y);
+      const z = (maxRegLayer + 1 - i) * 10;
+      row.forEach((n, col) => {
+        n.x = startX + col * (NODE_W + GAP_X);
+        n.y = y;
+        const el = nodesEl.querySelector(`[data-node-id="${n.id}"]`);
+        if (el) el.style.zIndex = z;
+      });
     }
 
     // Position start node: above first row, centered
-    const SE_W = 120;
-    const startEl = startNode ? nodesEl.querySelector(`[data-node-id="${startNode.id}"]`) : null;
-    const SE_H = startEl ? startEl.offsetHeight : 50;
     if (startNode) {
-      startNode.x = centerX - SE_W / 2;
-      startNode.y = PAD - GAP_Y - SE_H;
+      startNode.x = 16;
+      startNode.y = 16;
+      const startEl = nodesEl.querySelector(`[data-node-id="${startNode.id}"]`);
+      if (startEl) startEl.style.zIndex = (maxRegLayer + 2) * 10;
     }
 
-    // Position end node: below last row, centered
-    if (endNode) {
-      const lastRowY = maxRegLayer >= 0 ? PAD + maxRegLayer * (NODE_H + GAP_Y) + NODE_H : PAD;
-      endNode.x = centerX - SE_W / 2;
-      endNode.y = lastRowY + GAP_Y;
-    }
+    // Rebuild edges: remove old start edges, create clean connections
+    if (startNode) {
+      edges = edges.filter((e) => e.from !== startNode.id);
 
-    // Rebuild edges: remove old start/end edges, create clean connections
-    if (startNode || endNode) {
-      edges = edges.filter((e) => {
-        if (startNode && e.from === startNode.id) return false;
-        if (endNode && e.to === endNode.id) return false;
-        return true;
-      });
-
-      if (regularNodes.length === 0) {
-        // No cards: just start → end
-        if (startNode && endNode) {
-          edges.push({ id: "e" + nextId++, from: startNode.id, fromSide: "bottom", to: endNode.id, toSide: "top" });
-        }
-      } else {
-        // Compute root/leaf from regular-to-regular edges only
+      if (regularNodes.length > 0) {
+        // Compute root nodes (no incoming from regular nodes)
         const regHasIncoming = new Set();
-        const regHasOutgoing = new Set();
         edges.forEach((e) => {
-          const fromReg = regularNodes.some((n) => n.id === e.from);
-          const toReg = regularNodes.some((n) => n.id === e.to);
-          if (fromReg) regHasOutgoing.add(e.from);
-          if (toReg) regHasIncoming.add(e.to);
+          if (regularNodes.some((n) => n.id === e.to)) regHasIncoming.add(e.to);
         });
 
-        // Start → root nodes (no incoming from regular nodes)
-        if (startNode) {
-          regularNodes.forEach((n) => {
-            if (!regHasIncoming.has(n.id)) {
-              edges.push({ id: "e" + nextId++, from: startNode.id, fromSide: "bottom", to: n.id, toSide: "top" });
-            }
-          });
-        }
-        // Leaf nodes (no outgoing to regular nodes) → end
-        if (endNode) {
-          regularNodes.forEach((n) => {
-            if (!regHasOutgoing.has(n.id)) {
-              edges.push({ id: "e" + nextId++, from: n.id, fromSide: "bottom", to: endNode.id, toSide: "top" });
-            }
-          });
-        }
+        // Start → root nodes
+        regularNodes.forEach((n) => {
+          if (!regHasIncoming.has(n.id)) {
+            edges.push({ id: "e" + nextId++, from: startNode.id, fromSide: "bottom", to: n.id, toSide: "top" });
+          }
+        });
       }
     }
 
     write();
     render(); // render() calls resizeCanvas()
-
-    // Scroll so first row is near the top, left edge visible
-    const scrollEl = canvasEl ? canvasEl.closest(".layout2-canvas-scroll") : null;
-    if (scrollEl && startNode) {
-      scrollEl.scrollTo(
-        Math.max(0, startNode.x - 40),
-        Math.max(0, startNode.y - 40)
-      );
-    }
   }
 
-  function layoutPipeline(pipelineNodes, titleToId, startNode, endNode) {
-    const sampleEl = nodesEl ? nodesEl.querySelector(".cnode") : null;
+  function layoutPipeline(pipelineNodes, titleToId, startNode) {
+    const sampleEl = nodesEl ? nodesEl.querySelector(".cnode:not(.cnode-start)") : null;
     const NODE_W = sampleEl ? sampleEl.offsetWidth : 260;
     const NODE_H = sampleEl ? sampleEl.offsetHeight : 180;
     const GAP_X = 60;
@@ -1505,20 +1789,11 @@ const CanvasApp = (() => {
     });
 
     const centerX = CANVAS_PAD + maxW / 2;
-    const lastLevelY = sortedLevels.length > 0
-      ? START_Y + (sortedLevels.length - 1) * (NODE_H + GAP_Y)
-      : START_Y;
-    const SE_W = 120;
-
-    const startEl = startNode ? nodesEl.querySelector(`[data-node-id="${startNode.id}"]`) : null;
-    const SE_H = startEl ? startEl.offsetHeight : 50;
+    const SE_W = 56;
+    const SE_H = 56;
     if (startNode) {
       startNode.x = centerX - SE_W / 2;
       startNode.y = START_Y - GAP_Y - SE_H;
-    }
-    if (endNode) {
-      endNode.x = centerX - SE_W / 2;
-      endNode.y = lastLevelY + NODE_H + GAP_Y;
     }
   }
 
@@ -1550,6 +1825,7 @@ const CanvasApp = (() => {
   }
 
   function addPipeline(pipeline) {
+    saveUndo();
     const titleToId = new Map();
     allItemsMap.forEach((card, id) => {
       if (card && card.title) titleToId.set(card.title, id);
@@ -1557,14 +1833,9 @@ const CanvasApp = (() => {
 
     // Reuse existing start/end nodes (created by clear → ensureStartEndNodes)
     let startNode = nodes.find((n) => n.cardId === "__start__");
-    let endNode = nodes.find((n) => n.cardId === "__end__");
 
-    // Remove old edges connected to start/end
-    edges = edges.filter((e) => {
-      if (startNode && e.from === startNode.id) return false;
-      if (endNode && e.to === endNode.id) return false;
-      return true;
-    });
+    // Remove old edges from start
+    if (startNode) edges = edges.filter((e) => e.from !== startNode.id);
 
     const pipelineNodes = [];
     const nodeMap = [];
@@ -1592,19 +1863,8 @@ const CanvasApp = (() => {
       });
     }
 
-    // Connect leaf nodes (no outgoing edges) to end
-    if (endNode) {
-      const hasOutgoing = new Set();
-      edges.forEach((e) => hasOutgoing.add(e.from));
-      nodeMap.forEach((nid) => {
-        if (!hasOutgoing.has(nid)) {
-          edges.push({ id: "e" + nextId++, from: nid, fromSide: "bottom", to: endNode.id, toSide: "top" });
-        }
-      });
-    }
-
     // Compute levels from DAG
-    const allNodeIds = [startNode?.id, ...nodeMap, endNode?.id].filter(Boolean);
+    const allNodeIds = [startNode?.id, ...nodeMap].filter(Boolean);
     const childrenOf = new Map();
     const parentCount = new Map();
     allNodeIds.forEach((id) => { childrenOf.set(id, []); parentCount.set(id, 0); });
@@ -1636,17 +1896,11 @@ const CanvasApp = (() => {
       step.level = levelMap.get(node.id) || 0;
     });
     if (startNode) startNode._level = levelMap.get(startNode.id) || 0;
-    if (endNode) endNode._level = levelMap.get(endNode.id) || 0;
 
-    layoutPipeline(pipelineNodes, titleToId, startNode, endNode);
+    layoutPipeline(pipelineNodes, titleToId, startNode);
 
     write();
     render();
-
-    const scrollEl = canvasEl ? canvasEl.closest(".layout2-canvas-scroll") : null;
-    if (scrollEl && startNode) {
-      scrollEl.scrollTo(Math.max(0, startNode.x - 40), Math.max(0, startNode.y - 40));
-    }
   }
 
   function addPipelineAnimated(pipeline, onDone) {
@@ -1657,14 +1911,9 @@ const CanvasApp = (() => {
 
     // Reuse existing start/end nodes
     let startNode = nodes.find((n) => n.cardId === "__start__");
-    let endNode = nodes.find((n) => n.cardId === "__end__");
 
-    // Remove old edges connected to start/end
-    edges = edges.filter((e) => {
-      if (startNode && e.from === startNode.id) return false;
-      if (endNode && e.to === endNode.id) return false;
-      return true;
-    });
+    // Remove old edges from start
+    if (startNode) edges = edges.filter((e) => e.from !== startNode.id);
 
     // Create all pipeline nodes
     const nodeMap = [];
@@ -1705,19 +1954,8 @@ const CanvasApp = (() => {
       });
     }
 
-    // Connect leaf nodes to end
-    if (endNode) {
-      const hasOutgoing = new Set();
-      animEdges.forEach((e) => hasOutgoing.add(e.from));
-      nodeMap.forEach((nid) => {
-        if (!hasOutgoing.has(nid)) {
-          animEdges.push({ id: "e" + nextId++, from: nid, fromSide: "bottom", to: endNode.id, toSide: "top" });
-        }
-      });
-    }
-
     // Compute levels from DAG
-    const allNodeIds = [startNode?.id, ...nodeMap, endNode?.id].filter(Boolean);
+    const allNodeIds = [startNode?.id, ...nodeMap].filter(Boolean);
     const childrenOf = new Map();
     const parentCount = new Map();
     allNodeIds.forEach((id) => { childrenOf.set(id, []); parentCount.set(id, 0); });
@@ -1747,12 +1985,11 @@ const CanvasApp = (() => {
 
     // Apply computed levels
     if (startNode) startNode._level = levelMap.get(startNode.id) || 0;
-    if (endNode) endNode._level = levelMap.get(endNode.id) || 0;
     pipelineNodes.forEach(({ node, step }) => {
       step.level = levelMap.get(node.id) || 0;
     });
 
-    layoutPipeline(pipelineNodes, titleToId, startNode, endNode);
+    layoutPipeline(pipelineNodes, titleToId, startNode);
 
     // Animation order: start node, then pipeline nodes by level, then end node
     const levelGroups = new Map();
@@ -1780,15 +2017,6 @@ const CanvasApp = (() => {
         return;
       }
       if (idx >= animOrder.length) {
-        // Show end node
-        nodesEl.appendChild(buildNodeEl(endNode));
-        shownNodes.add(endNode.id);
-        animEdges.forEach((e) => {
-          if (shownNodes.has(e.from) && shownNodes.has(e.to)) {
-            const existing = arrowsEl.querySelector(`[data-edge-id="${e.id}"]`);
-            if (!existing) arrowsEl.appendChild(buildEdgeEl(e));
-          }
-        });
         animEdges.forEach((e) => edges.push(e));
         resizeCanvas();
         render();
@@ -1826,7 +2054,6 @@ const CanvasApp = (() => {
     selectedEdgeId = null;
     write();
     render();
-    autoLayout();
   }
 
   function getNodeById(id) {
@@ -1841,5 +2068,41 @@ const CanvasApp = (() => {
     }
   }
 
-  return { init, addNode, clear, setAllItems, autoLayout, addPipeline, addPipelineAnimated, getState, loadState, getNodeById, updateNodeOutput, render };
+  function lightBulb() {
+    const startNode = nodes.find((n) => n.cardId === "__start__");
+    if (!startNode) return;
+    const el = nodesEl.querySelector(`[data-node-id="${startNode.id}"]`);
+    if (el) { el.classList.remove("bulb-pulsing"); el.classList.add("bulb-lit"); }
+  }
+
+  function dimBulb() {
+    const startNode = nodes.find((n) => n.cardId === "__start__");
+    if (!startNode) return;
+    const el = nodesEl.querySelector(`[data-node-id="${startNode.id}"]`);
+    if (el) { el.classList.remove("bulb-lit", "bulb-pulsing"); }
+  }
+
+  function pulseBulb() {
+    const startNode = nodes.find((n) => n.cardId === "__start__");
+    if (!startNode) return;
+    const el = nodesEl.querySelector(`[data-node-id="${startNode.id}"]`);
+    if (el) { el.classList.remove("bulb-lit"); el.classList.add("bulb-pulsing"); }
+  }
+
+  function setEdgeClass(edgeId, cls) {
+    if (!arrowsEl) return;
+    arrowsEl.querySelectorAll(`[data-edge-id="${edgeId}"] .cedge`).forEach((p) => {
+      p.classList.remove("running", "done");
+      if (cls) p.classList.add(cls);
+    });
+  }
+
+  function clearEdgeClasses() {
+    if (!arrowsEl) return;
+    arrowsEl.querySelectorAll(".cedge.running, .cedge.done").forEach((p) => {
+      p.classList.remove("running", "done");
+    });
+  }
+
+  return { init, addNode, clear, setAllItems, autoLayout, addPipeline, addPipelineAnimated, getState, loadState, getNodeById, updateNodeOutput, render, lightBulb, dimBulb, pulseBulb, setEdgeClass, clearEdgeClasses };
 })();

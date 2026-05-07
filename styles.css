@@ -607,6 +607,30 @@ body.no-enter-anim .card {
   box-shadow: var(--shadow-lg);
 }
 
+.modal-close-x {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 120ms, color 120ms;
+}
+
+.modal-close-x:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
 .modal-panel h3 {
   margin: 0 0 8px;
   font-size: 1.02rem;
@@ -738,6 +762,29 @@ body.no-enter-anim .card {
   background: rgba(31, 143, 120, 0.15);
 }
 
+.api-test-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-test-row button {
+  flex-shrink: 0;
+}
+
+.meta-status {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.meta-status.success {
+  color: #16a34a;
+}
+
+.meta-status.error {
+  color: #ef4444;
+}
+
 .ai-btn {
   background: #4f46e5 !important;
   border-color: #4338ca !important;
@@ -767,9 +814,13 @@ body.no-enter-anim .card {
   margin-right: 6px;
 }
 
-.cnode-api-btn .spinner {
-  border-color: rgba(79, 70, 229, 0.2);
-  border-top-color: #4f46e5;
+.cnode-play-badge .spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  margin: 0;
 }
 
 @keyframes spin {
@@ -896,26 +947,6 @@ body.no-enter-anim .card {
   margin: 4px 0 0;
 }
 
-.card-usage {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 10px;
-  background: #6366f1;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 1;
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
 .hidden {
   display: none !important;
 }
@@ -1029,6 +1060,33 @@ body.no-enter-anim .card {
   gap: 8px;
 }
 
+.canvas-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: background 120ms, border-color 120ms;
+}
+
+.canvas-name:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.canvas-name:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--accent);
+  cursor: text;
+}
+
 .topbar-center {
   position: absolute;
   left: 50%;
@@ -1040,6 +1098,10 @@ body.no-enter-anim .card {
   align-items: center;
   gap: 8px;
   margin-left: auto;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .layout2-title {
@@ -1167,6 +1229,62 @@ body.no-enter-anim .card {
   transform: scale(0.95);
 }
 
+.topbar-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+.topbar-icon-btn.has-badge {
+  position: relative;
+}
+
+#undoBadge {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  display: none;
+  pointer-events: none;
+}
+
+#redoBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  display: none;
+  pointer-events: none;
+}
+
+#undoBadge.visible,
+#redoBadge.visible {
+  display: block;
+}
+
+.topbar-icon-btn:disabled #undoBadge,
+.topbar-icon-btn:disabled #redoBadge {
+  display: none !important;
+}
+
 .hybrid-icon-btn {
   border-color: rgba(245, 158, 11, 0.25);
   color: #d97706;
@@ -1276,11 +1394,81 @@ body.no-enter-anim .card {
   background: var(--surface-strong);
 }
 
+.settings-dropdown {
+  min-width: 200px;
+  padding: 6px 0;
+  background: #fff;
+}
+
+.settings-timestamp {
+  padding: 8px 14px 4px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  opacity: 0.5;
+  text-align: center;
+}
+
+.settings-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.settings-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  gap: 12px;
+}
+
+.settings-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.settings-dropdown .lang-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.settings-dropdown .lang-toggle-btn {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 120ms, color 120ms;
+}
+
+.settings-dropdown .lang-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.settings-dropdown .lang-toggle-btn:hover:not(.active) {
+  background: var(--surface-strong);
+}
+
 .layout2-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.layout2-main {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .layout2-canvas-scroll {
@@ -1306,7 +1494,8 @@ body.no-enter-anim .card {
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .canvas-arrows .cedge-hit {
@@ -1331,13 +1520,35 @@ body.no-enter-anim .card {
 }
 
 .canvas-arrows .cedge.selected {
-  stroke: var(--accent);
-  stroke-width: 2.5;
-  stroke-dasharray: 6 3;
+  stroke: var(--accent-strong);
+  stroke-width: 3;
+  stroke-dasharray: 8 4;
+  filter: drop-shadow(0 0 4px rgba(79, 70, 229, 0.4));
 }
 
-.canvas-arrows g:hover .cedge.selected {
-  stroke: var(--accent-strong);
+/* Edge: currently flowing into executing node */
+.canvas-arrows .cedge.running {
+  stroke: #eab308;
+  stroke-width: 2.5;
+  stroke-dasharray: 8 4;
+  animation: edge-flow 0.8s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(234, 179, 8, 0.5));
+}
+
+@keyframes edge-flow {
+  to { stroke-dashoffset: -12; }
+}
+
+/* Edge: execution complete */
+.canvas-arrows .cedge.done {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 3px rgba(31, 143, 120, 0.4));
+}
+
+/* Show handles when edge is selected */
+.canvas-arrows g:has(.cedge.selected) .cedge-handle {
+  opacity: 1;
 }
 
 .canvas-arrows .ctemp-line {
@@ -1359,7 +1570,7 @@ body.no-enter-anim .card {
   stroke: var(--accent);
   stroke-width: 2;
   cursor: grab;
-  pointer-events: all;
+  pointer-events: visible;
   opacity: 0;
   transition: opacity 120ms ease, r 100ms ease, fill 100ms ease;
 }
@@ -1376,7 +1587,7 @@ body.no-enter-anim .card {
 .canvas-nodes {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -1412,77 +1623,141 @@ body.no-enter-anim .card {
   box-shadow: 0 0 0 3px rgba(31, 143, 120, 0.2), var(--shadow-lg);
 }
 
-.cnode-start,
-.cnode-end {
-  width: 120px !important;
-  padding: 10px 12px 8px !important;
-  gap: 0 !important;
-  min-height: 44px !important;
+/* Pipeline: currently executing */
+.cnode.running {
+  border-color: transparent !important;
+  background-clip: padding-box;
+  position: relative;
+  box-shadow: 0 0 16px 3px rgba(234, 179, 8, 0.4);
+  animation: none;
+}
+
+.cnode.running::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 3px;
+  background: conic-gradient(from var(--marquee-angle, 0deg), #eab308, #fde047, #eab308, transparent, transparent, #eab308);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: marquee-spin 1.5s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes marquee-spin {
+  to { --marquee-angle: 360deg; }
+}
+
+@property --marquee-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Pipeline: finished executing */
+.cnode.done {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(31, 143, 120, 0.25);
 }
 
 .cnode-start {
-  border-color: var(--accent) !important;
-  box-shadow: 0 2px 8px rgba(31, 143, 120, 0.3);
-}
-
-.cnode-end {
-  border-color: var(--danger) !important;
-  box-shadow: 0 2px 8px rgba(190, 68, 88, 0.3);
+  padding: 8px !important;
+  gap: 0 !important;
+  width: 56px !important;
+  min-height: 56px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-color: var(--border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: default !important;
+  pointer-events: auto;
 }
 
 .cnode-start:hover {
-  border-color: var(--accent-strong) !important;
-  box-shadow: 0 2px 12px rgba(31, 143, 120, 0.5);
+  border-color: var(--accent) !important;
+  box-shadow: 0 2px 12px rgba(31, 143, 120, 0.3);
 }
 
-.cnode-end:hover {
-  border-color: #993344 !important;
-  box-shadow: 0 2px 12px rgba(190, 68, 88, 0.5);
+.cnode-start.selected {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px rgba(31, 143, 120, 0.25);
 }
 
-.cnode-se-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-  text-align: center;
-  padding: 4px 0;
+/* Lightbulb */
+.cnode-bulb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.cnode-start .cnode-se-title {
-  color: var(--accent);
+.bulb-svg {
+  width: 30px;
+  height: 30px;
+  fill: #ccc;
+  transition: fill 0.8s ease, filter 0.8s ease;
 }
 
-.cnode-end .cnode-se-title {
-  color: var(--danger);
+.cnode-start.bulb-lit .bulb-svg {
+  fill: #facc15;
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.6));
+}
+
+.cnode-start.bulb-pulsing {
+  border-color: #eab308 !important;
+  animation: bulb-pulse 1.5s ease-in-out infinite;
+}
+
+.cnode-start.bulb-pulsing .bulb-svg {
+  fill: #facc15;
+  filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.8));
+  animation: bulb-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes bulb-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(234, 179, 8, 0.3); }
+  50% { box-shadow: 0 0 20px 6px rgba(234, 179, 8, 0.7); }
+}
+
+@keyframes bulb-glow {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(250, 204, 21, 1)); }
 }
 
 .cnode-start-play {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 26px;
-  height: 26px;
+  top: -8px;
+  right: -8px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: none;
-  background: var(--accent);
-  color: #fff;
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--accent-strong);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.85;
-  transition: opacity 120ms, transform 120ms;
+  opacity: 1;
+  transition: transform 120ms, background 120ms;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }
 
 .cnode-start-play:hover {
-  opacity: 1;
-  transform: scale(1.1);
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: scale(1.15);
 }
 
 .cnode-start-play svg {
-  width: 14px;
-  height: 14px;
-  fill: #fff;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 .cnode.dragging {
@@ -1492,58 +1767,117 @@ body.no-enter-anim .card {
 }
 
 /* Stage label on bottom border — sits centered on the bottom edge */
-.cnode-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(100% + 24px);
-  margin: 0 0 -8px -12px;
-  padding: 0 4px;
-  position: relative;
-  z-index: 1;
-}
-
-.cnode-topbar::before {
-  content: "";
+.cnode-stage-badge-wrap {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--stage-color, var(--border));
-  opacity: 0.5;
-  z-index: -1;
+  bottom: -6px;
+  right: -6px;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.cnode-stage-label {
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background: var(--surface-strong);
-  padding: 0 6px;
-}
-
-.cnode-usage {
+.cnode-stage-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 10px;
-  background: #6366f1;
-  color: #fff;
-  font-size: 0.58rem;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.6rem;
   font-weight: 700;
-  line-height: 1;
+  color: #fff;
+  background: #6c757d;
+  border: 2px solid var(--surface-strong);
+}
+
+/* Card play button (in actions row) */
+/* Card play button (corner badge, top-right) */
+.cnode-play-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
+  top: -8px;
+  right: -8px;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: #fff;
+  color: var(--accent-strong);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: transform 120ms, background 120ms, border-color 120ms;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.cnode-play-badge:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  transform: scale(1.15);
+}
+
+.cnode-play-badge svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.cnode-play-badge.running {
+  opacity: 1;
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Copy output icon (inside output wrapper) */
+.cnode-copy-out-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms, color 120ms, background 120ms;
+  z-index: 2;
+}
+
+.cnode-copy-out-icon.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cnode-copy-out-icon:hover {
+  background: rgba(31, 143, 120, 0.12);
+  color: var(--accent-strong);
+}
+
+.cnode-copy-out-icon.copied {
+  color: var(--accent-strong);
+}
+
+.cnode-copy-out-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+/* Output area wrapper for positioning the copy icon */
+.cnode-title-row {
+  display: flex;
+  align-items: center;
 }
 
 .cnode-title {
@@ -1553,13 +1887,23 @@ body.no-enter-anim .card {
   line-height: 1.3;
   color: var(--text);
   white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.cnode-title::-webkit-scrollbar {
-  display: none;
+.cnode-title-error {
+  font-size: 0.72rem;
+  color: #ef4444;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 200ms;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.cnode-title-error.visible {
+  opacity: 1;
 }
 
 .cnode-subtitle {
@@ -1569,13 +1913,12 @@ body.no-enter-anim .card {
   padding: 2px 4px;
   border-radius: 4px;
   transition: all 150ms ease;
-  min-height: 18px;
   line-height: 1.3;
   text-align: left;
   white-space: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 .cnode-subtitle::-webkit-scrollbar {
@@ -1669,26 +2012,34 @@ body.no-enter-anim .card {
   color: #374151;
 }
 
+.cnode-output-wrap {
+  position: relative;
+}
+
+.cnode-output-wrap .cnode-output {
+  width: 100%;
+}
+
 .cnode-output:focus {
   border-color: #6366f1;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
 
-.cnode-api-btn {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(79, 70, 229, 0.12)) !important;
-  border-color: rgba(99, 102, 241, 0.3) !important;
-  color: #4f46e5 !important;
+/* Primary buttons: copy input / copy output */
+.cnode-copy-input-btn,
+.cnode-copy-output-btn {
+  background: linear-gradient(135deg, rgba(31, 143, 120, 0.12), rgba(31, 143, 120, 0.08)) !important;
+  border-color: rgba(31, 143, 120, 0.35) !important;
+  color: var(--accent-strong) !important;
+  font-weight: 700 !important;
 }
 
-.cnode-api-btn:hover {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.2)) !important;
+.cnode-copy-input-btn:hover,
+.cnode-copy-output-btn:hover {
+  background: linear-gradient(135deg, rgba(31, 143, 120, 0.22), rgba(31, 143, 120, 0.14)) !important;
 }
 
-.cnode-api-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* Secondary: view template */
 .cnode-status {
   font-size: 0.68rem;
   min-height: 0;
@@ -1709,13 +2060,14 @@ body.no-enter-anim .card {
 }
 
 .cnode-preview-toggle {
-  background: rgba(99, 102, 241, 0.08) !important;
-  border-color: rgba(99, 102, 241, 0.2) !important;
-  color: #6366f1 !important;
+  background: rgba(0, 0, 0, 0.03) !important;
+  border-color: var(--border) !important;
+  color: var(--muted) !important;
 }
 
 .cnode-preview-toggle:hover {
-  background: rgba(99, 102, 241, 0.15) !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: var(--text) !important;
 }
 
 .cnode-preview {
@@ -1753,57 +2105,30 @@ body.no-enter-anim .card {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #adb5bd;
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(20, 34, 58, 0.15);
+  background: var(--accent);
   opacity: 0;
-  transition: background 120ms ease, transform 120ms ease, opacity 120ms ease;
+  left: 50%;
+  transform: translateX(-50%);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.cnode-conn-top {
+  top: -16px;
+}
+
+.cnode-conn-bottom {
+  bottom: -16px;
+}
+
+.cnode:hover .cnode-conn-top,
+.cnode:hover .cnode-conn-bottom {
+  opacity: 0.4;
 }
 
 .cnode-conn-top:hover,
 .cnode-conn-bottom:hover {
-  opacity: 1;
-  background: var(--accent);
-  transform: translateX(-50%) scale(1.3);
-}
-
-/* Wide bottom trigger zone — thin bar spanning most of the card */
-.cnode-conn-bottom {
-  width: 70%;
-  height: 6px;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 3px;
-  border: none;
-  box-shadow: none;
-  background: var(--accent);
-  opacity: 0;
-}
-
-.cnode:hover .cnode-conn-bottom {
-  opacity: 0.35;
-}
-
-.cnode-conn-bottom:hover {
-  opacity: 0.8 !important;
-  transform: translateX(-50%) scaleY(1.5);
-}
-
-/* Top connector stays as a dot */
-.cnode-conn-top {
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.cnode:hover .cnode-conn-top {
-  opacity: 0.4;
-}
-
-.cnode-conn-top:hover {
   opacity: 1 !important;
-  transform: translateX(-50%) scale(1.3);
+  transform: translateX(-50%) scale(1.4);
 }
 
 .cnode-conn-snap {
@@ -1837,9 +2162,19 @@ body.no-enter-anim .card {
   width: 240px;
   flex-shrink: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--surface);
   border-left: 1px solid var(--border);
   padding: 8px;
+  position: relative;
+  margin-right: 0;
+  will-change: margin-right;
+  transition: margin-right 200ms ease, border-left-color 200ms ease;
+}
+
+.layout2-drawer.collapsed {
+  margin-right: -240px;
+  border-left-color: transparent;
 }
 
 .cdrawer-group {
@@ -1898,6 +2233,45 @@ body.no-enter-anim .card {
   cursor: grabbing;
 }
 
+.cdrawer-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cdrawer-item span[contenteditable="true"] {
+  outline: 2px solid var(--accent);
+  background: #fff;
+  cursor: text;
+  user-select: text;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.cdrawer-item-edit {
+  flex-shrink: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0;
+}
+
+.cdrawer-item:hover .cdrawer-item-edit {
+  display: flex;
+}
+
+.cdrawer-item-edit:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text);
+}
+
 .cdrawer-ghost {
   padding: 7px 10px;
   font-size: 0.8rem;
@@ -1918,6 +2292,18 @@ body.no-enter-anim .card {
 
 .cdrawer-custom > .cdrawer-summary:active {
   cursor: grabbing;
+}
+
+.cdrawer-stage-name {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  min-width: 20px;
+}
+.cdrawer-stage-name[contenteditable="true"] {
+  outline: 2px solid var(--accent);
+  background: #fff;
+  cursor: text;
 }
 
 .cdrawer-dragging {
