@@ -12,7 +12,7 @@ const LAST_MODIFIED = "2026-05-08 14:45:00";
 // ── UI i18n ──
 const UI_STRINGS = {
   zh: {
-    siteTitle: "杂交水论 A+B Alchemy",
+    siteTitle: "杂交水论",
     cardManagement: "卡片管理",
     researchCanvas: "杂交水论",
     newCanvas: "新建画布",
@@ -181,9 +181,11 @@ const UI_STRINGS = {
     promptLangLabel: "提示词",
     outputLangLabel: "输出",
     updatedAt: "更新于 {time}",
+    collapseAll: "全部折叠",
+    expandAll: "全部展开",
   },
   en: {
-    siteTitle: "A+B Alchemy",
+    siteTitle: "A+B Innovation",
     cardManagement: "Card Management",
     researchCanvas: "A+B Alchemy",
     newCanvas: "New Canvas",
@@ -352,6 +354,8 @@ const UI_STRINGS = {
     promptLangLabel: "Prompt",
     outputLangLabel: "Output",
     updatedAt: "Updated {time}",
+    collapseAll: "Collapse All",
+    expandAll: "Expand All",
   },
 };
 
