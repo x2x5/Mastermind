@@ -7,7 +7,9 @@ const FALLBACK_DATA_SOURCE = "./README.md";
 let currentPromptLang = "zh";
 
 // Project last push time — update before each push
-const LAST_MODIFIED = "2026-05-08 14:45:00";
+const LAST_MODIFIED = "2026-05-08 02:45:00 PM";
+
+const AUTHOR_EMAIL = "x2x5.blog@outlook.com";
 
 // ── UI i18n ──
 const UI_STRINGS = {
@@ -18,7 +20,7 @@ const UI_STRINGS = {
     newCanvas: "新建画布",
     newLayout: "新布局",
     choosePlayMethod: "选择玩法",
-    aiGenCanvas: "AI 生成画布",
+    aiGenCanvas: "AI 布局",
     runPipeline: "一键运行",
     pause: "暂停",
     resume: "继续",
@@ -49,9 +51,9 @@ const UI_STRINGS = {
     saveSettings: "保存设置",
     close: "关闭",
     choosePlayTitle: "请选择你的玩法",
-    genCanvasTitle: "AI 生成画布",
+    genCanvasTitle: "AI 布局",
     genCanvasPlaceholder: "描述你想要的画布，例如：我想从多个不同领域的论文中各取一个模块，拼成一个新方法...",
-    genCanvasBtn: "生成画布",
+    genCanvasBtn: "开始布局",
     canvasHasContent: "当前画布有内容",
     switchWarning: "切换玩法会清空当前画布，是否先保存？",
     saveAndContinue: "保存并继续",
@@ -107,7 +109,7 @@ const UI_STRINGS = {
     fileParseFailed: "文件解析失败",
     genCanvasPlease: "请先描述你想要的画布",
     genCanvasApi: "请先配置 API Key",
-    genCanvasGenerating: "正在让 AI 生成画布...",
+    genCanvasGenerating: "正在让 AI 布局...",
     genCanvasCancelled: "已取消",
     genCanvasFailed: "失败：",
     canvasEmptyAddCards: "画布为空，请先添加卡片",
@@ -143,6 +145,15 @@ const UI_STRINGS = {
     pmDatasetDesc: "构造大规模/高质量/新领域数据集",
     pmMetric: "评估指标设计",
     pmMetricDesc: "让「怎么判断好坏」更可靠",
+    systemPlayMethods: "系统玩法",
+    customPlayMethods: "我的玩法",
+    morePlayMethods: "更多玩法",
+    saveAsPlayMethod: "+ 保存当前画布为玩法",
+    playMethodNamePrompt: "为这个玩法命名：",
+    playMethodSaved: "玩法已保存",
+    playMethodEmpty: "画布为空，无法保存为玩法",
+    playMethodDeleteConfirm: "确定删除这个玩法吗？",
+    customPlayMethodsCount: "{count} 个自定义玩法",
     noticeSkillsFallback: "当前未读取到 {source}，已回退到 README.md。建议把数据迁移到 skills.md。",
     noticeNoSkills: "浏览器没有直接读取到 {source}。你可以点击下面按钮手动选择本地 skills.md 文件。",
     noticeNoTemplates: "没有解析到可用模板，请检查 skills.md 的 Part I 和代码块格式。",
@@ -153,6 +164,9 @@ const UI_STRINGS = {
     nodesCount: "{count} 节点",
     genCanvasGeneratingStatus: "生成中... ({count} 字)",
     genCanvasDone: "已生成「{name}」，共 {count} 个步骤",
+    bulbAnalyzing: "正在分析需求...",
+    bulbGenerating: "正在生成布局...",
+    bulbDrawing: "正在绘制画布...",
     genCanvasParseError: "无法解析 AI 返回的流程",
     genCanvasEmptyError: "AI 返回的流程为空",
     deleteStageTooltip: "删除阶段（移入回收站）",
@@ -183,6 +197,11 @@ const UI_STRINGS = {
     updatedAt: "更新于 {time}",
     collapseAll: "全部折叠",
     expandAll: "全部展开",
+    changelog: "更新日志",
+    contactAuthor: "联系作者",
+    about: "关于",
+    emailCopied: "已复制作者邮箱",
+    devMode: "开发者模式",
   },
   en: {
     siteTitle: "A+B Innovation",
@@ -191,7 +210,7 @@ const UI_STRINGS = {
     newCanvas: "New Canvas",
     newLayout: "New Layout",
     choosePlayMethod: "Play Methods",
-    aiGenCanvas: "AI Generate Canvas",
+    aiGenCanvas: "AI Layout",
     runPipeline: "Run Pipeline",
     pause: "Pause",
     resume: "Resume",
@@ -222,7 +241,7 @@ const UI_STRINGS = {
     saveSettings: "Save Settings",
     close: "Close",
     choosePlayTitle: "Choose Your Play Method",
-    genCanvasTitle: "AI Generate Canvas",
+    genCanvasTitle: "AI Layout",
     genCanvasPlaceholder: "Describe the canvas you want, e.g.: I want to extract one module from papers in different fields and combine them into a new method...",
     genCanvasBtn: "Generate",
     canvasHasContent: "Canvas Has Content",
@@ -316,6 +335,15 @@ const UI_STRINGS = {
     pmDatasetDesc: "Build large-scale / high-quality / novel-domain datasets",
     pmMetric: "Evaluation Metric Design",
     pmMetricDesc: "Make \"how to judge quality\" more reliable",
+    systemPlayMethods: "System Methods",
+    customPlayMethods: "My Methods",
+    morePlayMethods: "More Methods",
+    saveAsPlayMethod: "+ Save Canvas as Method",
+    playMethodNamePrompt: "Name this play method:",
+    playMethodSaved: "Play method saved",
+    playMethodEmpty: "Canvas is empty, cannot save as play method",
+    playMethodDeleteConfirm: "Delete this play method?",
+    customPlayMethodsCount: "{count} custom methods",
     noticeSkillsFallback: "Could not load {source}, fell back to README.md. Consider migrating data to skills.md.",
     noticeNoSkills: "Browser could not load {source}. Click the button below to manually select a local skills.md file.",
     noticeNoTemplates: "No usable templates found. Check skills.md Part I and code block format.",
@@ -326,6 +354,9 @@ const UI_STRINGS = {
     nodesCount: "{count} nodes",
     genCanvasGeneratingStatus: "Generating... ({count} chars)",
     genCanvasDone: "Generated「{name}」, {count} steps",
+    bulbAnalyzing: "Analyzing...",
+    bulbGenerating: "Generating layout...",
+    bulbDrawing: "Drawing canvas...",
     genCanvasParseError: "Failed to parse AI response",
     genCanvasEmptyError: "AI returned empty workflow",
     deleteStageTooltip: "Delete stage (move to trash)",
@@ -356,6 +387,11 @@ const UI_STRINGS = {
     updatedAt: "Updated {time}",
     collapseAll: "Collapse All",
     expandAll: "Expand All",
+    changelog: "Changelog",
+    contactAuthor: "Contact Author",
+    about: "About",
+    emailCopied: "Author email copied",
+    devMode: "Developer Mode",
   },
 };
 
@@ -682,7 +718,7 @@ const STAGE_ORDER = [
 
 const API_CONFIG_KEY = "prompt-card-api-config";
 const API_PROVIDERS = {
-  deepseek: { name: "DeepSeek", endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-chat", format: "openai" },
+  deepseek: { name: "DeepSeek", endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-v4-flash", format: "openai" },
   openai: { name: "OpenAI", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-4o-mini", format: "openai" },
   zhipu: { name: "智谱 (GLM)", endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions", model: "glm-4-flash", format: "openai" },
   moonshot: { name: "Moonshot (Kimi)", endpoint: "https://api.moonshot.cn/v1/chat/completions", model: "moonshot-v1-8k", format: "openai" },
@@ -693,19 +729,31 @@ const API_PROVIDERS = {
 };
 
 function loadApiConfig() {
+  let result;
   try {
     const raw = localStorage.getItem(API_CONFIG_KEY);
-    if (!raw) return { provider: "deepseek", endpoint: "", apiKey: "", model: "" };
-    const cfg = JSON.parse(raw);
-    return {
-      provider: cfg.provider || "deepseek",
-      endpoint: cfg.endpoint || "",
-      apiKey: cfg.apiKey || "",
-      model: cfg.model || "",
-    };
+    if (!raw) {
+      const prov = API_PROVIDERS["deepseek"];
+      result = { provider: "deepseek", endpoint: prov.endpoint, apiKey: "", model: prov.model };
+    } else {
+      const cfg = JSON.parse(raw);
+      const provider = cfg.provider || "deepseek";
+      const prov = API_PROVIDERS[provider];
+      result = {
+        provider,
+        endpoint: cfg.endpoint || (prov ? prov.endpoint : ""),
+        apiKey: cfg.apiKey || "",
+        model: cfg.model || (prov ? prov.model : ""),
+      };
+    }
   } catch (_) {
-    return { provider: "deepseek", endpoint: "", apiKey: "", model: "" };
+    const prov = API_PROVIDERS["deepseek"];
+    result = { provider: "deepseek", endpoint: prov.endpoint, apiKey: "", model: prov.model };
   }
+  if (typeof window !== "undefined" && window.LOCAL_API_CONFIG && window.LOCAL_API_CONFIG.apiKey) {
+    result.apiKey = window.LOCAL_API_CONFIG.apiKey;
+  }
+  return result;
 }
 
 function saveApiConfig(cfg) {
@@ -1209,14 +1257,15 @@ function renderCustomStages() {
   });
 
   // 回收站
-  if (state.trashedStages.length > 0) {
+  const trashCount = state.trashedStages.length + (state.trashedCards || []).length;
+  if (trashCount > 0) {
     const trashDetails = document.createElement("details");
     trashDetails.className = "zone stage-zone trash-zone";
     trashDetails.open = false;
 
     const trashSummary = document.createElement("summary");
     const trashSpan = document.createElement("span");
-    trashSpan.textContent = `回收站 (${state.trashedStages.length})`;
+    trashSpan.textContent = `回收站 (${trashCount})`;
 
     const emptyTrashBtn = document.createElement("button");
     emptyTrashBtn.className = "clear-trash-btn";
@@ -1238,7 +1287,7 @@ function renderCustomStages() {
 
       const nameSpan = document.createElement("span");
       nameSpan.className = "trash-item-name";
-      nameSpan.textContent = entry.stage.name + (entry.cards.length > 0 ? ` (${entry.cards.length} 张卡片)` : "");
+      nameSpan.textContent = "📁 " + entry.stage.name + (entry.cards.length > 0 ? ` (${entry.cards.length} 张卡片)` : "");
 
       const restoreBtn = document.createElement("button");
       restoreBtn.className = "stage-ctrl-btn";
@@ -1247,6 +1296,26 @@ function renderCustomStages() {
         e.preventDefault();
         e.stopPropagation();
         restoreTrashedStage(index);
+      });
+
+      row.append(nameSpan, restoreBtn);
+      trashSection.appendChild(row);
+    });
+    (state.trashedCards || []).forEach((entry, index) => {
+      const row = document.createElement("div");
+      row.className = "trash-item";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "trash-item-name";
+      nameSpan.textContent = "🃏 " + entry.card.title;
+
+      const restoreBtn = document.createElement("button");
+      restoreBtn.className = "stage-ctrl-btn";
+      restoreBtn.textContent = t("restore");
+      restoreBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        restoreTrashedCard(index);
       });
 
       row.append(nameSpan, restoreBtn);
@@ -1670,19 +1739,22 @@ async function handleAiGenerate() {
   }
 }
 
+function openApiConfig() {
+  if (!apiConfigModal) return;
+  apiConfigModal.classList.remove("hidden");
+  const cfg = loadApiConfig();
+  const prov = API_PROVIDERS[cfg.provider];
+  apiProviderSelect.value = cfg.provider;
+  apiKeyInput.value = cfg.apiKey;
+  // Always show a value, never empty — fall back to provider defaults
+  apiEndpointInput.value = cfg.endpoint || (prov ? prov.endpoint : "");
+  apiModelInput.value = cfg.model || (prov ? prov.model : "");
+}
+
 function bindApiConfig() {
   if (!apiConfigModal) return;
 
   const apiConfigBtn1 = document.getElementById("apiConfigBtn1");
-  const openApiConfig = () => {
-    apiConfigModal.classList.remove("hidden");
-    const cfg = loadApiConfig();
-    apiProviderSelect.value = cfg.provider;
-    apiKeyInput.value = cfg.apiKey;
-    apiModelInput.value = cfg.model;
-    const prov = API_PROVIDERS[cfg.provider];
-    apiEndpointInput.value = cfg.endpoint || (prov ? prov.endpoint : "");
-  };
 
   if (apiConfigBtn) apiConfigBtn.addEventListener("click", openApiConfig);
   if (apiConfigBtn1) apiConfigBtn1.addEventListener("click", openApiConfig);
@@ -1704,8 +1776,8 @@ function bindApiConfig() {
     apiProviderSelect.addEventListener("change", () => {
       const defaults = API_PROVIDERS[apiProviderSelect.value];
       if (defaults) {
-        if (defaults.endpoint) apiEndpointInput.value = defaults.endpoint;
-        if (defaults.model) apiModelInput.value = defaults.model;
+        apiEndpointInput.value = defaults.endpoint;
+        apiModelInput.value = defaults.model;
       }
     });
   }
@@ -1765,11 +1837,19 @@ function bindApiConfig() {
   });
 
   // Prevent dropdown content clicks from closing the dropdown
-  document.querySelectorAll(".lang-dropdown").forEach((dropdown) => {
+  document.querySelectorAll(".lang-dropdown, .settings-dropdown").forEach((dropdown) => {
     dropdown.addEventListener("click", (e) => {
       e.stopPropagation();
     });
   });
+
+  // Prevent dev mode toggle clicks from closing the dropdown
+  const devModeToggleEl = document.getElementById("devModeToggle");
+  if (devModeToggleEl) {
+    devModeToggleEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+  }
 
   // UI Language toggle
   function updateUiLang(newLang) {
@@ -1779,20 +1859,29 @@ function bindApiConfig() {
     // Re-render canvas if available
     if (typeof CanvasApp !== "undefined") {
       CanvasApp.render();
-      if (layout2El && !layout2El.classList.contains("hidden")) {
-        const ordered = buildDrawerData();
-        const trashData = buildTrashData();
-        CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
-      }
     }
     // Sync both toggles
     document.querySelectorAll("#uiLangToggle .lang-toggle-btn, #uiLangToggle1 .lang-toggle-btn").forEach((b) => {
       b.classList.toggle("active", b.dataset.lang === newLang);
     });
+    // Update settings panel button texts
+    const aboutBtn = document.getElementById("settingsAboutBtn");
+    if (aboutBtn) {
+      aboutBtn.textContent = t("about") + " " + t("siteTitle");
+    }
+    const contactBtn = document.getElementById("settingsContactBtn");
+    if (contactBtn && contactBtn.textContent !== AUTHOR_EMAIL) {
+      contactBtn.textContent = t("contactAuthor");
+    }
+    const devLabel = document.getElementById("devModeLabel");
+    if (devLabel) {
+      devLabel.textContent = t("devMode");
+    }
   }
 
   document.querySelectorAll("#uiLangToggle .lang-toggle-btn, #uiLangToggle1 .lang-toggle-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
       updateUiLang(btn.dataset.lang);
     });
   });
@@ -1809,6 +1898,7 @@ function bindApiConfig() {
       // Update canvas with new template content
       if (typeof CanvasApp !== "undefined") {
         CanvasApp.setAllItems(allItems);
+        CanvasApp.setTitleMap(CARD_TITLE_MAP);
         CanvasApp.render();
       }
     }
@@ -2478,6 +2568,7 @@ function bindLayoutSwitch() {
 
   function openPlayMethodModal() {
     if (playMethodModal) playMethodModal.classList.remove("hidden");
+    renderCustomPlayMethods();
   }
   function closePlayMethodModal() {
     if (playMethodModal) playMethodModal.classList.add("hidden");
@@ -2504,6 +2595,14 @@ function bindLayoutSwitch() {
       executePlayMethod(method);
     });
   });
+
+  // Save as play method button
+  const saveAsPlayMethodBtn = document.getElementById("saveAsPlayMethodBtn");
+  if (saveAsPlayMethodBtn) {
+    saveAsPlayMethodBtn.addEventListener("click", () => {
+      saveCurrentCanvasAsPlayMethod();
+    });
+  }
 
   // ── AI Wand Modal ──
   const aiWandModal = document.getElementById("aiWandModal");
@@ -2558,6 +2657,13 @@ function bindLayoutSwitch() {
       aiWandAbort = new AbortController();
       aiWandGenerateBtn.disabled = true;
       aiWandGenerateBtn.style.opacity = "0.5";
+
+      // Close modal immediately and start bulb pulsing
+      closeAiWandModal();
+      CanvasApp.clear();
+      CanvasApp.pulseBulb();
+      CanvasApp.setBulbStatus(t("bulbAnalyzing"));
+
       aiWandStatus.textContent = t("genCanvasGenerating");
       aiWandStatus.className = "play-method-gen-status";
 
@@ -2578,10 +2684,11 @@ function bindLayoutSwitch() {
    - level：层级编号（从0开始），同一层级的卡片会并排显示
    - dependsOn：依赖的步骤索引数组（从0开始），省略则默认依赖上一步
 
-关键设计原则：
-- 用户提到的初始输入（如论文、数据集、方法）应该放在同一层级并排显示
-- 多个输入汇聚到一个处理步骤时，用 dependsOn 引用多个父节点
-- 一个步骤的结果分发给多个下游时，多个下游都 dependsOn 它
+关键设计原则——分层思考：
+- level 代表"思考层级"。同一 level 的卡片是并行关系（同时执行），不同 level 是串行关系（先后执行）
+- 判断两张卡片是否同一层的核心标准：它们之间是否存在数据依赖？如果 B 不需要 A 的输出就能执行，那么 A 和 B 应该在同一层
+- 例如：精读论文 A 和精读论文 B 是并行的（互不依赖），所以都在 level 0；但"评估方法迁移"需要读完两篇论文，所以在 level 1
+- dependsOn 只引用直接父节点，不要引用祖父节点。如果 A→B→C，C 只需要 dependsOn: [B的索引]，不需要同时引用 A
 - 流程应该是有向无环图（DAG），不要有循环
 
 可用的已有卡片标题和所属阶段：
@@ -2593,32 +2700,32 @@ ${cardListStr}
 示例1 — A+B 跨域迁移（三篇论文并排 → 汇聚 → 分支）：
 A+B 跨域迁移
 [
-  { "title": "论文精读笔记", "label": "主体论文", "stage": "阶段 1：调研选题", "level": 0 },
-  { "title": "论文精读笔记", "label": "灵感论文 A", "stage": "阶段 1：调研选题", "level": 0 },
-  { "title": "论文精读笔记", "label": "灵感论文 B", "stage": "阶段 1：调研选题", "level": 0 },
-  { "title": "方法迁移评估", "label": "融合可行性", "stage": "阶段 2：构思 Idea", "level": 1, "dependsOn": [0, 1, 2] },
-  { "title": "创新点提炼", "label": "", "stage": "阶段 2：构思 Idea", "level": 2, "dependsOn": [3] },
-  { "title": "方法架构设计", "label": "融合方案", "stage": "阶段 3：设计方法", "level": 3, "dependsOn": [4] },
-  { "title": "实验方案设计", "label": "", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [5] },
-  { "title": "实验结果分析", "label": "", "stage": "阶段 4：执行实验", "level": 5, "dependsOn": [6] },
-  { "title": "Method 章节撰写", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [7] },
-  { "title": "Abstract 撰写", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [7] }
+  { "title": "精读论文", "label": "主体论文", "stage": "阶段 1：调研选题", "level": 0 },
+  { "title": "精读论文", "label": "灵感论文 A", "stage": "阶段 1：调研选题", "level": 0 },
+  { "title": "精读论文", "label": "灵感论文 B", "stage": "阶段 1：调研选题", "level": 0 },
+  { "title": "评估方法迁移", "label": "融合可行性", "stage": "阶段 2：构思 Idea", "level": 1, "dependsOn": [0, 1, 2] },
+  { "title": "提炼创新点", "label": "", "stage": "阶段 2：构思 Idea", "level": 2, "dependsOn": [3] },
+  { "title": "设计方法架构", "label": "融合方案", "stage": "阶段 3：设计方法", "level": 3, "dependsOn": [4] },
+  { "title": "设计实验方案", "label": "", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [5] },
+  { "title": "分析实验结果", "label": "", "stage": "阶段 4：执行实验", "level": 5, "dependsOn": [6] },
+  { "title": "撰写 Method 章节", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [7] },
+  { "title": "撰写 Abstract", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [7] }
 ]
 
 示例2 — Benchmark 构建（线性流程）：
 Benchmark构建
 [
-  { "title": "领域图谱梳理", "label": "现有Benchmark调研", "stage": "阶段 1：调研选题", "level": 0 },
-  { "title": "论文精读笔记", "label": "主流数据集分析", "stage": "阶段 1：调研选题", "level": 0 },
-  { "title": "现有 Benchmark 分析", "label": "", "stage": "阶段 1：调研选题", "level": 1, "dependsOn": [0, 1] },
-  { "title": "任务定义", "label": "评测任务形式化", "stage": "阶段 2：构思 Idea", "level": 2, "dependsOn": [2] },
-  { "title": "评估协议设计", "label": "", "stage": "阶段 4：执行实验", "level": 3, "dependsOn": [3] },
-  { "title": "数据构造 Pipeline", "label": "评测数据", "stage": "阶段 3：设计方法", "level": 3, "dependsOn": [3] },
-  { "title": "数据质量评估", "label": "", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [5] },
-  { "title": "实验方案设计", "label": "基线评测", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [4, 5] },
-  { "title": "实验结果分析", "label": "", "stage": "阶段 4：执行实验", "level": 5, "dependsOn": [7] },
-  { "title": "Method 章节撰写", "label": "Benchmark描述", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [8] },
-  { "title": "Abstract 撰写", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [8] }
+  { "title": "梳理领域", "label": "现有Benchmark调研", "stage": "阶段 1：调研选题", "level": 0 },
+  { "title": "精读论文", "label": "主流数据集分析", "stage": "阶段 1：调研选题", "level": 0 },
+  { "title": "分析现有 Benchmark", "label": "", "stage": "阶段 1：调研选题", "level": 1, "dependsOn": [0, 1] },
+  { "title": "定义任务", "label": "评测任务形式化", "stage": "阶段 2：构思 Idea", "level": 2, "dependsOn": [2] },
+  { "title": "设计评估协议", "label": "", "stage": "阶段 4：执行实验", "level": 3, "dependsOn": [3] },
+  { "title": "构造数据 Pipeline", "label": "评测数据", "stage": "阶段 3：设计方法", "level": 3, "dependsOn": [3] },
+  { "title": "评估数据质量", "label": "", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [5] },
+  { "title": "设计实验方案", "label": "基线评测", "stage": "阶段 4：执行实验", "level": 4, "dependsOn": [4, 5] },
+  { "title": "分析实验结果", "label": "", "stage": "阶段 4：执行实验", "level": 5, "dependsOn": [7] },
+  { "title": "撰写 Method 章节", "label": "Benchmark描述", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [8] },
+  { "title": "撰写 Abstract", "label": "", "stage": "阶段 5：写论文", "level": 6, "dependsOn": [8] }
 ]
 
 只输出标题行 + JSON 数组，不要任何额外解释。`;
@@ -2637,10 +2744,11 @@ Output format requirements (strictly follow):
    - level: level number (starting from 0), cards at the same level will be displayed side by side
    - dependsOn: array of step indices this step depends on (starting from 0), defaults to previous step if omitted
 
-Key design principles:
-- Initial inputs mentioned by the user (e.g., papers, datasets, methods) should be placed at the same level side by side
-- When multiple inputs converge into one processing step, use dependsOn referencing multiple parent nodes
-- When one step's output fans out to multiple downstream steps, all downstream steps should dependsOn it
+Key design principles — layer-based thinking:
+- A "level" represents a thinking layer. Cards at the same level are parallel (executed simultaneously); cards at different levels are sequential (executed in order)
+- Core rule for same-layer placement: does card B need card A's output? If B can run without A's output, A and B belong to the same level
+- Example: "Deep-Read Paper A" and "Deep-Read Paper B" are parallel (independent), so both at level 0; but "Assess Method Transfer" needs both papers read, so it goes to level 1
+- dependsOn should only reference direct parent nodes, not grandparent nodes. If A→B→C, C only needs dependsOn: [B's index], not both A and B
 - The workflow should be a directed acyclic graph (DAG), no cycles
 
 Available card titles and their stages:
@@ -2652,32 +2760,32 @@ If existing cards are not enough, use the newCard field to create new cards:
 Example 1 — A+B Cross-Domain Transfer (three papers side by side → converge → branch):
 A+B Cross-Domain Transfer
 [
-  { "title": "Paper Deep Reading Notes", "label": "Main Paper", "stage": "Stage 1: Research Topics", "level": 0 },
-  { "title": "Paper Deep Reading Notes", "label": "Inspiration Paper A", "stage": "Stage 1: Research Topics", "level": 0 },
-  { "title": "Paper Deep Reading Notes", "label": "Inspiration Paper B", "stage": "Stage 1: Research Topics", "level": 0 },
-  { "title": "Method Transfer Assessment", "label": "Integration Feasibility", "stage": "Stage 2: Conceive Ideas", "level": 1, "dependsOn": [0, 1, 2] },
-  { "title": "Innovation Point Extraction", "label": "", "stage": "Stage 2: Conceive Ideas", "level": 2, "dependsOn": [3] },
-  { "title": "Method Architecture Design", "label": "Integration Plan", "stage": "Stage 3: Design Methods", "level": 3, "dependsOn": [4] },
-  { "title": "Experiment Plan Design", "label": "", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [5] },
-  { "title": "Experiment Results Analysis", "label": "", "stage": "Stage 4: Run Experiments", "level": 5, "dependsOn": [6] },
-  { "title": "Method Section Writing", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [7] },
-  { "title": "Abstract Writing", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [7] }
+  { "title": "Deep-Read Papers", "label": "Main Paper", "stage": "Stage 1: Research Topics", "level": 0 },
+  { "title": "Deep-Read Papers", "label": "Inspiration Paper A", "stage": "Stage 1: Research Topics", "level": 0 },
+  { "title": "Deep-Read Papers", "label": "Inspiration Paper B", "stage": "Stage 1: Research Topics", "level": 0 },
+  { "title": "Assess Method Transfer", "label": "Integration Feasibility", "stage": "Stage 2: Conceive Ideas", "level": 1, "dependsOn": [0, 1, 2] },
+  { "title": "Extract Innovation Points", "label": "", "stage": "Stage 2: Conceive Ideas", "level": 2, "dependsOn": [3] },
+  { "title": "Design Method Architecture", "label": "Integration Plan", "stage": "Stage 3: Design Methods", "level": 3, "dependsOn": [4] },
+  { "title": "Design Experiment Plan", "label": "", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [5] },
+  { "title": "Analyze Experiment Results", "label": "", "stage": "Stage 4: Run Experiments", "level": 5, "dependsOn": [6] },
+  { "title": "Write Method Section", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [7] },
+  { "title": "Write Abstract", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [7] }
 ]
 
 Example 2 — Benchmark Construction (linear flow):
 Benchmark Construction
 [
-  { "title": "Research Landscape Mapping", "label": "Existing Benchmark Survey", "stage": "Stage 1: Research Topics", "level": 0 },
-  { "title": "Paper Deep Reading Notes", "label": "Mainstream Dataset Analysis", "stage": "Stage 1: Research Topics", "level": 0 },
-  { "title": "Existing Benchmark Analysis", "label": "", "stage": "Stage 1: Research Topics", "level": 1, "dependsOn": [0, 1] },
-  { "title": "Task Definition", "label": "Evaluation Task Formalization", "stage": "Stage 2: Conceive Ideas", "level": 2, "dependsOn": [2] },
-  { "title": "Evaluation Protocol Design", "label": "", "stage": "Stage 4: Run Experiments", "level": 3, "dependsOn": [3] },
-  { "title": "Data Construction Pipeline", "label": "Evaluation Data", "stage": "Stage 3: Design Methods", "level": 3, "dependsOn": [3] },
-  { "title": "Data Quality Assessment", "label": "", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [5] },
-  { "title": "Experiment Plan Design", "label": "Baseline Evaluation", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [4, 5] },
-  { "title": "Experiment Results Analysis", "label": "", "stage": "Stage 4: Run Experiments", "level": 5, "dependsOn": [7] },
-  { "title": "Method Section Writing", "label": "Benchmark Description", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [8] },
-  { "title": "Abstract Writing", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [8] }
+  { "title": "Map Research Landscape", "label": "Existing Benchmark Survey", "stage": "Stage 1: Research Topics", "level": 0 },
+  { "title": "Deep-Read Papers", "label": "Mainstream Dataset Analysis", "stage": "Stage 1: Research Topics", "level": 0 },
+  { "title": "Analyze Existing Benchmarks", "label": "", "stage": "Stage 1: Research Topics", "level": 1, "dependsOn": [0, 1] },
+  { "title": "Define Task", "label": "Evaluation Task Formalization", "stage": "Stage 2: Conceive Ideas", "level": 2, "dependsOn": [2] },
+  { "title": "Design Evaluation Protocol", "label": "", "stage": "Stage 4: Run Experiments", "level": 3, "dependsOn": [3] },
+  { "title": "Build Data Pipeline", "label": "Evaluation Data", "stage": "Stage 3: Design Methods", "level": 3, "dependsOn": [3] },
+  { "title": "Assess Data Quality", "label": "", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [5] },
+  { "title": "Design Experiment Plan", "label": "Baseline Evaluation", "stage": "Stage 4: Run Experiments", "level": 4, "dependsOn": [4, 5] },
+  { "title": "Analyze Experiment Results", "label": "", "stage": "Stage 4: Run Experiments", "level": 5, "dependsOn": [7] },
+  { "title": "Write Method Section", "label": "Benchmark Description", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [8] },
+  { "title": "Write Abstract", "label": "", "stage": "Stage 5: Write Paper", "level": 6, "dependsOn": [8] }
 ]
 
 Output only the title line + JSON array, no additional explanation.`;
@@ -2690,6 +2798,7 @@ Output only the title line + JSON array, no additional explanation.`;
           fullText += text;
           aiWandStatus.textContent = t("genCanvasGeneratingStatus").replace("{count}", fullText.length);
           aiWandStatus.className = "play-method-gen-status";
+          CanvasApp.setBulbStatus(t("bulbGenerating"));
         }, aiWandAbort.signal);
 
         // Parse response: first line = name, rest = JSON
@@ -2711,6 +2820,57 @@ Output only the title line + JSON array, no additional explanation.`;
 
         if (!Array.isArray(pipeline) || pipeline.length === 0) {
           throw new Error(t("genCanvasEmptyError"));
+        }
+
+        // Assign default dependsOn for steps that don't specify it (or have empty array)
+        pipeline.forEach((step, i) => {
+          if ((!step.dependsOn || step.dependsOn.length === 0) && i > 0) {
+            step.dependsOn = [i - 1];
+          }
+        });
+
+        console.log("[AI Layout] Raw pipeline:", pipeline.map((s, i) => `${i}(${s.title}):${JSON.stringify(s.dependsOn || [])}`).join(", "));
+
+        // Remove transitive edges: if A→B→C, remove A→C from dependsOn
+        {
+          console.log("[AI Layout] Before transitive reduction:", pipeline.map((s, i) => `${i}:${JSON.stringify(s.dependsOn || [])}`).join(", "));
+          const n = pipeline.length;
+          const reachable = new Array(n).fill(null).map(() => new Set());
+          // BFS from each node to find all transitive descendants (following parent→child direction)
+          for (let i = 0; i < n; i++) {
+            const visited = new Set([i]);
+            const queue = [i];
+            while (queue.length > 0) {
+              const cur = queue.shift();
+              for (let j = 0; j < n; j++) {
+                if (visited.has(j)) continue;
+                const deps = pipeline[j].dependsOn || [];
+                if (deps.includes(cur)) {
+                  visited.add(j);
+                  reachable[i].add(j);
+                  queue.push(j);
+                }
+              }
+            }
+          }
+          // For each step, remove dependsOn entries that are transitively reachable through another direct parent
+          let removedCount = 0;
+          pipeline.forEach((step, i) => {
+            if (!step.dependsOn || step.dependsOn.length <= 1) return;
+            const direct = new Set(step.dependsOn);
+            for (const parent of [...step.dependsOn]) {
+              for (const otherParent of step.dependsOn) {
+                if (otherParent !== parent && reachable[otherParent].has(parent)) {
+                  direct.delete(parent);
+                  removedCount++;
+                  console.log(`[AI Layout] Removing transitive edge: step ${i} dependsOn ${parent} (reachable via ${otherParent})`);
+                  break;
+                }
+              }
+            }
+            step.dependsOn = [...direct].sort((a, b) => a - b);
+          });
+          console.log("[AI Layout] After transitive reduction:", pipeline.map((s, i) => `${i}:${JSON.stringify(s.dependsOn || [])}`).join(", "), `(${removedCount} edges removed)`);
         }
 
         // Process pipeline: create missing cards
@@ -2739,14 +2899,16 @@ Output only the title line + JSON array, no additional explanation.`;
           CanvasApp.setAllItems(allItems);
         }
 
-        // Close wand modal, clear canvas, apply animated pipeline
-        closeAiWandModal();
-        CanvasApp.clear();
+        // Apply animated pipeline (modal already closed, canvas cleared, bulb pulsing)
+        CanvasApp.setBulbStatus(t("bulbDrawing"));
         CanvasApp.addPipelineAnimated(pipeline, () => {
+          CanvasApp.lightBulb();
           aiWandStatus.textContent = t("genCanvasDone").replace("{name}", nameLine).replace("{count}", pipeline.length);
           aiWandStatus.className = "play-method-gen-status success";
         });
       } catch (err) {
+        CanvasApp.dimBulb();
+        CanvasApp.setBulbStatus("");
         if (err.name === "AbortError") {
           aiWandStatus.textContent = t("genCanvasCancelled");
           aiWandStatus.className = "play-method-gen-status";
@@ -2780,24 +2942,141 @@ Output only the title line + JSON array, no additional explanation.`;
         if (tsEl) {
           tsEl.textContent = t("updatedAt").replace("{time}", LAST_MODIFIED);
         }
+        // Update about button text
+        const aboutBtn = document.getElementById("settingsAboutBtn");
+        if (aboutBtn) {
+          aboutBtn.textContent = t("about") + " " + t("siteTitle");
+        }
+        // Reset contact author button text
+        const contactBtn = document.getElementById("settingsContactBtn");
+        if (contactBtn) {
+          contactBtn.textContent = t("contactAuthor");
+        }
+        // Update dev mode label text
+        const devLabel = document.getElementById("devModeLabel");
+        if (devLabel) {
+          devLabel.textContent = t("devMode");
+        }
       }
+    });
+  }
+
+  // Dev mode toggle — show/hide clear cache button
+  const devModeToggle = document.getElementById("devModeToggle");
+  const devModeContent = document.getElementById("devModeContent");
+  if (devModeToggle && devModeContent) {
+    // Restore saved state
+    const savedDevMode = localStorage.getItem("dev-mode");
+    if (savedDevMode === "true") {
+      devModeToggle.checked = true;
+      devModeContent.classList.remove("hidden");
+    }
+    devModeToggle.addEventListener("change", () => {
+      devModeContent.classList.toggle("hidden", !devModeToggle.checked);
+      localStorage.setItem("dev-mode", devModeToggle.checked);
     });
   }
 
   if (settingsApiBtn) {
     settingsApiBtn.addEventListener("click", () => {
       settingsDropdown.classList.add("hidden");
-      if (apiConfigModal) apiConfigModal.classList.remove("hidden");
+      openApiConfig();
     });
   }
 
   if (settingsClearCacheBtn) {
     settingsClearCacheBtn.addEventListener("click", () => {
-      settingsDropdown.classList.add("hidden");
       if (confirm("确定清除所有本地缓存？页面将刷新。")) {
+        const keepDevMode = devModeToggle && devModeToggle.checked;
         localStorage.clear();
+        if (keepDevMode) localStorage.setItem("dev-mode", "true");
         location.reload();
       }
+    });
+  }
+
+  // Contact author — click to reveal email, copy, and show toast
+  const settingsContactBtn = document.getElementById("settingsContactBtn");
+  if (settingsContactBtn) {
+    settingsContactBtn.textContent = t("contactAuthor");
+    settingsContactBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(AUTHOR_EMAIL).catch(() => {});
+      settingsContactBtn.textContent = AUTHOR_EMAIL;
+      showToast(t("emailCopied"));
+    });
+  }
+
+  // Toast helper
+  function showToast(message) {
+    let toastEl = document.getElementById("toastMessage");
+    if (!toastEl) {
+      toastEl = document.createElement("div");
+      toastEl.id = "toastMessage";
+      toastEl.className = "toast";
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = message;
+    toastEl.classList.add("show");
+    setTimeout(() => {
+      toastEl.classList.remove("show");
+    }, 2000);
+  }
+
+  // Changelog modal
+  const changelogModal = document.getElementById("changelogModal");
+  const changelogMask = document.getElementById("changelogMask");
+  const changelogCloseX = document.getElementById("changelogCloseX");
+  const changelogBody = document.getElementById("changelogBody");
+  const changelogTitle = document.getElementById("changelogTitle");
+
+  function renderChangelog() {
+    if (!changelogBody || !changelogTitle) return;
+    changelogTitle.textContent = t("changelog");
+    let html = "";
+    for (const day of CHANGELOG) {
+      html += '<div class="changelog-day">';
+      html += '<div class="changelog-day-title">' + day.date + "</div>";
+      if (day.am) {
+        html += '<div class="changelog-period">';
+        html += '<div class="changelog-period-title">上午 ' + day.am.time + "</div>";
+        html += '<ol class="changelog-list">';
+        for (const item of day.am.items) {
+          html += "<li>" + item + "</li>";
+        }
+        html += "</ol></div>";
+      }
+      if (day.pm) {
+        html += '<div class="changelog-period">';
+        html += '<div class="changelog-period-title">下午 ' + day.pm.time + "</div>";
+        html += '<ol class="changelog-list">';
+        for (const item of day.pm.items) {
+          html += "<li>" + item + "</li>";
+        }
+        html += "</ol></div>";
+      }
+      html += "</div>";
+    }
+    changelogBody.innerHTML = html;
+  }
+
+  const settingsChangelogBtn = document.getElementById("settingsChangelogBtn");
+  if (settingsChangelogBtn && changelogModal) {
+    settingsChangelogBtn.addEventListener("click", () => {
+      settingsDropdown.classList.add("hidden");
+      renderChangelog();
+      changelogModal.classList.remove("hidden");
+    });
+  }
+
+  if (changelogMask) {
+    changelogMask.addEventListener("click", () => {
+      changelogModal.classList.add("hidden");
+    });
+  }
+
+  if (changelogCloseX) {
+    changelogCloseX.addEventListener("click", () => {
+      changelogModal.classList.add("hidden");
     });
   }
 
@@ -2805,6 +3084,52 @@ Output only the title line + JSON array, no additional explanation.`;
   // ── Drawer toggle ──
   const drawerEl = document.getElementById("canvasDrawer");
   const drawerToggleBtn = document.getElementById("drawerToggleBtn");
+
+  // Tutorial modal
+  const tutorialModal = document.getElementById("tutorialModal");
+  const tutorialMask = document.getElementById("tutorialMask");
+  const tutorialCloseX = document.getElementById("tutorialCloseX");
+  const settingsTutorialBtn = document.getElementById("settingsTutorialBtn");
+  if (settingsTutorialBtn && tutorialModal) {
+    settingsTutorialBtn.addEventListener("click", () => {
+      settingsDropdown.classList.add("hidden");
+      tutorialModal.classList.remove("hidden");
+    });
+  }
+  if (tutorialMask) {
+    tutorialMask.addEventListener("click", () => {
+      tutorialModal.classList.add("hidden");
+    });
+  }
+  if (tutorialCloseX) {
+    tutorialCloseX.addEventListener("click", () => {
+      tutorialModal.classList.add("hidden");
+    });
+  }
+
+  // About modal
+  const aboutModal = document.getElementById("aboutModal");
+  const aboutMask = document.getElementById("aboutMask");
+  const aboutCloseX = document.getElementById("aboutCloseX");
+  const settingsAboutBtn = document.getElementById("settingsAboutBtn");
+  const aboutTitle = document.getElementById("aboutTitle");
+  if (settingsAboutBtn && aboutModal) {
+    settingsAboutBtn.addEventListener("click", () => {
+      settingsDropdown.classList.add("hidden");
+      if (aboutTitle) aboutTitle.textContent = t("about") + " " + t("siteTitle");
+      aboutModal.classList.remove("hidden");
+    });
+  }
+  if (aboutMask) {
+    aboutMask.addEventListener("click", () => {
+      aboutModal.classList.add("hidden");
+    });
+  }
+  if (aboutCloseX) {
+    aboutCloseX.addEventListener("click", () => {
+      aboutModal.classList.add("hidden");
+    });
+  }
 
   if (drawerToggleBtn && drawerEl) {
     drawerToggleBtn.addEventListener("click", () => {
@@ -2815,7 +3140,8 @@ Output only the title line + JSON array, no additional explanation.`;
 
 function confirmCanvasSwitch(callback) {
   const curState = CanvasApp.getState();
-  if (!curState.nodes || curState.nodes.length === 0) {
+  const hasContent = curState.nodes && curState.nodes.some((n) => n.cardId !== "__start__" && n.cardId !== "__end__");
+  if (!hasContent) {
     callback("discard");
     return;
   }
@@ -2883,6 +3209,176 @@ function confirmCanvasSwitch(callback) {
       if (saveChoice) saveChoice.classList.add("hidden");
     };
   }
+}
+
+// ── Custom Play Methods ──
+
+const CUSTOM_PLAY_METHODS_KEY = "custom-play-methods";
+
+function getCustomPlayMethods() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_PLAY_METHODS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (_) {
+    return [];
+  }
+}
+
+function saveCustomPlayMethods(list) {
+  try {
+    localStorage.setItem(CUSTOM_PLAY_METHODS_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function extractPipelineFromCanvas() {
+  const canvasState = CanvasApp.getState();
+  if (!canvasState.nodes || canvasState.nodes.length === 0) return null;
+
+  const nodes = canvasState.nodes;
+  const edges = canvasState.edges;
+
+  // Build adjacency from edges
+  const childrenOf = new Map();
+  const parentCount = new Map();
+  nodes.forEach((n) => { childrenOf.set(n.id, []); parentCount.set(n.id, 0); });
+  edges.forEach((e) => {
+    if (childrenOf.has(e.from) && parentCount.has(e.to)) {
+      childrenOf.get(e.from).push(e.to);
+      parentCount.set(e.to, parentCount.get(e.to) + 1);
+    }
+  });
+
+  // Topological sort from start node
+  const startNode = nodes.find((n) => n.cardId === "__start__");
+  if (!startNode) return null;
+
+  const visited = new Set();
+  const order = [];
+  const queue = [startNode.id];
+  while (queue.length > 0) {
+    const cur = queue.shift();
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    order.push(cur);
+    for (const childId of (childrenOf.get(cur) || [])) {
+      queue.push(childId);
+    }
+  }
+
+  // Extract pipeline steps (skip start/end nodes)
+  const pipeline = [];
+  const cardMap = new Map(allItems.map((c) => [c.id, c]));
+  for (const nodeId of order) {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (!node || node.cardId === "__start__" || node.cardId === "__end__") continue;
+    const card = cardMap.get(node.cardId);
+    const title = card ? card.title : node.cardId;
+    const stage = card ? (card.category || "") : "";
+    pipeline.push({ title, label: node.subtitle || "", stage });
+  }
+
+  return pipeline.length > 0 ? pipeline : null;
+}
+
+function saveCurrentCanvasAsPlayMethod() {
+  const pipeline = extractPipelineFromCanvas();
+  if (!pipeline) {
+    alert(t("playMethodEmpty"));
+    return;
+  }
+
+  const name = prompt(t("playMethodNamePrompt"));
+  if (!name || !name.trim()) return;
+
+  const methods = getCustomPlayMethods();
+  methods.push({
+    id: "pm_" + Date.now(),
+    name: name.trim(),
+    pipeline,
+  });
+  saveCustomPlayMethods(methods);
+  renderCustomPlayMethods();
+}
+
+function renderCustomPlayMethods() {
+  const grid = document.getElementById("customMethodsGrid");
+  if (!grid) return;
+  const methods = getCustomPlayMethods();
+  // Keep the "+" button, remove the rest
+  const addBtn = document.getElementById("saveAsPlayMethodBtn");
+  grid.innerHTML = "";
+  if (addBtn) grid.appendChild(addBtn);
+
+  methods.forEach((method) => {
+    const card = document.createElement("button");
+    card.className = "play-method-card";
+    card.type = "button";
+    card.addEventListener("click", () => {
+      const modal = document.getElementById("playMethodModal");
+      if (modal) modal.classList.add("hidden");
+      executeCustomPlayMethod(method.id);
+    });
+
+    const circle = document.createElement("span");
+    circle.className = "play-method-circle";
+    circle.textContent = "📋";
+
+    const nameEl = document.createElement("span");
+    nameEl.className = "play-method-name";
+    nameEl.textContent = method.name;
+
+    // Delete button (top-right of circle)
+    const delBtn = document.createElement("button");
+    delBtn.className = "play-method-custom-del";
+    delBtn.type = "button";
+    delBtn.textContent = "×";
+    delBtn.title = t("delete");
+    delBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!confirm(t("playMethodDeleteConfirm"))) return;
+      const updated = getCustomPlayMethods().filter((m) => m.id !== method.id);
+      saveCustomPlayMethods(updated);
+      renderCustomPlayMethods();
+    });
+
+    card.append(circle, nameEl, delBtn);
+    grid.appendChild(card);
+  });
+}
+
+function executeCustomPlayMethod(id) {
+  const methods = getCustomPlayMethods();
+  const method = methods.find((m) => m.id === id);
+  if (!method || !method.pipeline) return;
+
+  const applyMethod = () => {
+    CanvasApp.clear();
+    // Ensure pipeline cards exist
+    const existing = new Set();
+    if (typeof allItems !== "undefined") {
+      allItems.forEach((card) => { if (card && card.title) existing.add(card.title); });
+    }
+    const seen = new Set();
+    method.pipeline.forEach(({ title, stage }) => {
+      if (existing.has(title) || seen.has(title)) return;
+      seen.add(title);
+      const category = stage || "未分类";
+      const prompt = `# Role\n你是一位专业的研究助手。\n\n# Task\n请根据标题「${title}」完成相应的研究任务。\n\n# Input\n在此处粘贴需要处理的内容...`;
+      const id = buildCustomCardId();
+      state.customCards.push({ id, title, category, prompt, stageId: "" });
+    });
+    if (seen.size > 0) {
+      commitState();
+      refreshAllItems();
+      CanvasApp.setAllItems(allItems);
+    }
+    CanvasApp.addPipeline(method.pipeline);
+  };
+
+  confirmCanvasSwitch((choice) => {
+    if (choice === "cancel") return;
+    applyMethod();
+  });
 }
 
 function executePlayMethod(method) {
@@ -3189,11 +3685,18 @@ function buildDrawerData() {
 }
 
 function buildTrashData() {
-  return state.trashedStages.map((entry, index) => ({
+  const stageEntries = state.trashedStages.map((entry, index) => ({
+    type: "stage",
     name: entry.stage.name,
     cardCount: entry.cards.length,
     trashIndex: index,
   }));
+  const cardEntries = (state.trashedCards || []).map((entry, index) => ({
+    type: "card",
+    name: entry.card.title,
+    trashIndex: index,
+  }));
+  return [...stageEntries, ...cardEntries];
 }
 
 function switchToLayout2() {
@@ -3205,7 +3708,8 @@ function switchToLayout2() {
   const ordered = buildDrawerData();
   const trashData = buildTrashData();
   CanvasApp.setAllItems(allItems);
-  CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
+  CanvasApp.setTitleMap(CARD_TITLE_MAP);
+  CanvasApp.init(ordered, handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, trashData, handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard, handleDrawerDeleteCard, handleDrawerMoveCardToStage);
 }
 
 function handleDrawerAddCard(stageKey) {
@@ -3233,8 +3737,31 @@ function handleDrawerRenameCard(cardId, newTitle) {
   refreshAllItems();
 }
 
-function handleDrawerRestoreStage(trashIndex) {
-  restoreTrashedStage(trashIndex);
+function handleDrawerDeleteCard(cardId) {
+  deleteCustomCard(cardId);
+}
+
+function handleDrawerMoveCardToStage(cardId, newStageId) {
+  const card = state.customCards.find((c) => c.id === cardId);
+  if (!card) return;
+  if (newStageId.startsWith("builtin:")) {
+    card.stageId = "";
+    card.category = newStageId.slice(8);
+  } else {
+    const stage = state.customStages.find((s) => s.id === newStageId);
+    if (!stage) return;
+    card.stageId = newStageId;
+    card.category = stage.name;
+  }
+  commitState();
+}
+
+function handleDrawerRestoreStage(type, trashIndex) {
+  if (type === "card") {
+    restoreTrashedCard(trashIndex);
+  } else {
+    restoreTrashedStage(trashIndex);
+  }
 }
 
 function handleDrawerEmptyTrash() {
@@ -3428,7 +3955,8 @@ function commitState(options = {}) {
   // Rebuild layout 2 drawer if visible
   if (layout2El && !layout2El.classList.contains("hidden")) {
     CanvasApp.setAllItems(allItems);
-    CanvasApp.init(buildDrawerData(), handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, buildTrashData(), handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard);
+    CanvasApp.setTitleMap(CARD_TITLE_MAP);
+    CanvasApp.init(buildDrawerData(), handleDrawerReorder, handleDrawerAddCard, handleDrawerAddStage, handleDrawerDeleteStage, buildTrashData(), handleDrawerRestoreStage, handleDrawerEmptyTrash, handleDrawerRenameStage, handleDrawerRenameCard, handleDrawerDeleteCard, handleDrawerMoveCardToStage);
   }
 }
 
@@ -3523,6 +4051,7 @@ function createDefaultState() {
     customCards: [],
     customStages: [],
     trashedStages: [],
+    trashedCards: [],
     editedCards: {},
     deletedCardIds: [],
     userCardsSeeded: false,
@@ -3600,6 +4129,17 @@ function deleteCustomStage(stageId) {
   commitState();
 }
 
+function deleteCustomCard(cardId) {
+  const card = state.customCards.find((c) => c.id === cardId);
+  if (!card) return;
+  if (!state.trashedCards) state.trashedCards = [];
+  state.trashedCards.push({ card: { ...card } });
+  state.customCards = state.customCards.filter((c) => c.id !== cardId);
+  state.commonIds = state.commonIds.filter((cid) => cid !== cardId);
+  inputStore.delete(cardId);
+  commitState();
+}
+
 function restoreTrashedStage(trashIndex) {
   if (trashIndex < 0 || trashIndex >= state.trashedStages.length) return;
   const entry = state.trashedStages[trashIndex];
@@ -3620,8 +4160,33 @@ function restoreTrashedStage(trashIndex) {
   commitState();
 }
 
+function restoreTrashedCard(trashIndex) {
+  if (!state.trashedCards || trashIndex < 0 || trashIndex >= state.trashedCards.length) return;
+  const entry = state.trashedCards[trashIndex];
+  const card = entry.card;
+  // Check if the original stage still exists
+  const stageExists = state.customStages.some((s) => s.id === card.stageId);
+  if (!stageExists) {
+    // Find or create "未分类" stage
+    let uncategorized = state.customStages.find((s) => s.name === t("uncategorized"));
+    if (!uncategorized) {
+      uncategorized = { id: "stage-" + Math.random().toString(36).slice(2, 9), name: t("uncategorized"), order: state.customStages.length };
+      state.customStages.push(uncategorized);
+    }
+    card.stageId = uncategorized.id;
+    card.category = uncategorized.name;
+  }
+  if (!state.customCards.find((cc) => cc.id === card.id)) {
+    state.customCards.push({ ...card });
+    state.commonIds.push(card.id);
+  }
+  state.trashedCards.splice(trashIndex, 1);
+  commitState();
+}
+
 function emptyTrash() {
   state.trashedStages = [];
+  state.trashedCards = [];
   commitState();
 }
 
@@ -3691,6 +4256,20 @@ function normalizeState(raw) {
           .filter((c) => c.id && c.title && c.prompt) : [],
       }))
       .filter((t) => t.stage.id);
+  }
+  if (Array.isArray(raw.trashedCards)) {
+    next.trashedCards = raw.trashedCards
+      .filter((t) => t && typeof t === "object" && t.card)
+      .map((t) => ({
+        card: {
+          id: String(t.card.id || "").trim(),
+          title: String(t.card.title || "").trim(),
+          category: String(t.card.category || "").trim() || "未分类",
+          prompt: String(t.card.prompt || "").trim(),
+          stageId: String(t.card.stageId || "").trim(),
+        },
+      }))
+      .filter((t) => t.card.id && t.card.title);
   }
   if (typeof raw.userCardsSeeded === "boolean") {
     next.userCardsSeeded = raw.userCardsSeeded;

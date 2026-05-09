@@ -31,7 +31,7 @@
           <button id="playMethodBtn" class="topbar-icon-btn hybrid-icon-btn" type="button" data-i18n-tooltip="choosePlayMethod" data-tooltip="选择玩法">
             <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>
           </button>
-          <button id="aiWandBtn" class="topbar-icon-btn ai-gen-icon" type="button" data-i18n-tooltip="aiGenCanvas" data-tooltip="AI 生成画布">
+          <button id="aiWandBtn" class="topbar-icon-btn ai-gen-icon" type="button" data-i18n-tooltip="aiGenCanvas" data-tooltip="AI 布局">
             <svg viewBox="0 0 24 24"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7l2.5-1.4zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM14.37 7.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.72 11.05a.996.996 0 0 0 0-1.41l-2.35-2.35zm-1.06 1.06l2.35 2.35-1.06 1.06-2.35-2.35 1.06-1.06z"/></svg>
           </button>
         </div>
@@ -67,8 +67,6 @@
               <svg viewBox="0 0 24 24"><path d="M19.14 12.94a7.07 7.07 0 0 0 .06-.94c0-.32-.03-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.04 7.04 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.3-.07.63-.07.94s.03.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.26.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg>
             </button>
             <div id="settingsDropdown" class="topbar-dropdown settings-dropdown hidden">
-              <button id="settingsApiBtn" class="topbar-dropdown-item" type="button">API 设置</button>
-              <div class="settings-divider"></div>
               <div class="settings-section">
                 <span class="settings-label" data-i18n="uiLangLabel">界面语言</span>
                 <div class="lang-toggle" id="uiLangToggle">
@@ -91,7 +89,25 @@
                 </div>
               </div>
               <div class="settings-divider"></div>
-              <button id="settingsClearCacheBtn" class="topbar-dropdown-item" type="button">清除缓存</button>
+              <button id="settingsApiBtn" class="topbar-dropdown-item" type="button">API 设置</button>
+              <button id="settingsTutorialBtn" class="topbar-dropdown-item" type="button">使用教程</button>
+              <div class="settings-divider"></div>
+              <button id="settingsChangelogBtn" class="topbar-dropdown-item" type="button">更新日志</button>
+              <button id="settingsContactBtn" class="topbar-dropdown-item" type="button">联系作者</button>
+              <button id="settingsAboutBtn" class="topbar-dropdown-item" type="button">关于 杂交水论</button>
+              <div class="settings-divider"></div>
+              <div class="settings-dev-mode" id="settingsDevMode">
+                <div class="settings-dev-mode-row">
+                  <span class="settings-dev-mode-label" id="devModeLabel">开发者模式</span>
+                  <label class="settings-toggle">
+                    <input type="checkbox" id="devModeToggle">
+                    <span class="settings-toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="settings-dev-mode-content hidden" id="devModeContent">
+                  <button id="settingsClearCacheBtn" class="topbar-dropdown-item" type="button">清除缓存</button>
+                </div>
+              </div>
               <div class="settings-timestamp" id="settingsTimestamp"></div>
             </div>
           </div>
@@ -155,7 +171,7 @@
     <!-- API Config Modal -->
     <div id="apiConfigModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="apiConfigTitle">
       <div id="apiConfigMask" class="modal-mask"></div>
-      <section class="modal-panel">
+      <section class="modal-panel api-config-panel">
         <button class="modal-close-x" id="apiConfigCloseX" type="button" aria-label="关闭">&times;</button>
         <h3 id="apiConfigTitle" data-i18n="apiConfigTitle">API 配置</h3>
         <div class="api-settings-body">
@@ -174,7 +190,7 @@
           </label>
           <label>
             <span data-i18n="apiUrl">API 地址</span>
-            <input id="apiEndpointInput" type="text" placeholder="https://api.example.com/v1/chat/completions" />
+            <input id="apiEndpointInput" type="text" />
           </label>
           <label>
             API Key
@@ -184,12 +200,59 @@
             <span data-i18n="model">模型</span>
             <input id="apiModelInput" type="text" />
           </label>
-          <div class="api-test-row">
-            <button id="apiTestBtn" type="button">测试连接</button>
-            <span id="apiTestStatus" class="meta-status"></span>
+          <span id="apiTestStatus" class="meta-status"></span>
+          <div class="api-save-row">
+            <button id="apiTestBtn" type="button" class="api-test-btn">测试连接</button>
+            <button id="apiSaveBtn" type="button" data-i18n="saveSettings">保存设置</button>
           </div>
-          <button id="apiSaveBtn" type="button" data-i18n="saveSettings">保存设置</button>
           <span id="apiStatusText" class="meta-status"></span>
+        </div>
+      </section>
+    </div>
+
+    <!-- Changelog Modal -->
+    <div id="changelogModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="changelogTitle">
+      <div id="changelogMask" class="modal-mask"></div>
+      <section class="modal-panel changelog-panel">
+        <button class="modal-close-x" id="changelogCloseX" type="button" aria-label="关闭">&times;</button>
+        <h3 id="changelogTitle"></h3>
+        <div class="changelog-body" id="changelogBody"></div>
+      </section>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+      <div id="tutorialMask" class="modal-mask"></div>
+      <section class="modal-panel tutorial-panel">
+        <button class="modal-close-x" id="tutorialCloseX" type="button" aria-label="关闭">&times;</button>
+        <h3 id="tutorialTitle">使用教程</h3>
+        <div class="tutorial-body" id="tutorialBody">
+          <p><strong>杂交水论 A+B Alchemy</strong> 是一个面向科研工作者的本地网页工具，核心功能是通过 A+B 跨域迁移的方式，从多篇论文中各取一个模块，拼接成一个新方法。</p>
+          <p><strong>基本操作</strong></p>
+          <p>页面右侧是卡片面板，按科研流程的七个阶段分组：选题与调研、Idea 构思、方法设计、实验执行、论文写作、审稿与修改、投稿与准备。每个阶段内有多个 Skills 卡片，点击卡片可以在输入区填入你的研究内容，然后复制模板加输入内容发给 AI，或直接调用配置好的 API 生成结果。</p>
+          <p><strong>画布编排</strong></p>
+          <p>点击卡片标题旁的加号按钮，可以把卡片添加到中央画布。画布上的节点可以自由拖拽定位，用连线建立逻辑关系。选中一个节点后，从右侧再点加号，新节点会出现在选中节点的下方。选中两个节点后点击画布空白处可以创建连线。选中一条连线后按 Delete 键可以删除。</p>
+          <p><strong>一键运行</strong></p>
+          <p>当画布上的节点形成完整的流程图后，点击顶部工具栏的一键运行按钮，系统会按照节点之间的拓扑顺序，逐个调用 AI API，把上游节点的输出自动注入到下游节点的输入中，实现一个完整的研究流程自动化。</p>
+          <p><strong>保存与加载</strong></p>
+          <p>所有数据包括节点位置、连线关系、自定义卡片都保存在浏览器 localStorage 中。你也可以导出为 JSON 文件备份，或从文件加载。</p>
+          <p><strong>快捷键</strong></p>
+          <p>Ctrl+Z 撤销，Ctrl+Shift+Z 重做。Delete 删除选中的节点或连线。</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <div id="aboutMask" class="modal-mask"></div>
+      <section class="modal-panel about-panel">
+        <button class="modal-close-x" id="aboutCloseX" type="button" aria-label="关闭">&times;</button>
+        <h3 id="aboutTitle">关于 杂交水论</h3>
+        <div class="about-body" id="aboutBody">
+          <p>杂交水论 A+B Alchemy 的设计哲学源于一个观察：真正的科研创新往往发生在领域交叉处。一个计算机视觉里的注意力机制，放到自然语言处理里就是 Transformer；一个生物学里的进化思想，放到优化算法里就是遗传算法。</p>
+          <p>但这个交叉过程在传统的科研 workflow 中是被动的。研究者往往是在读了很多论文之后，凭直觉发现两个方法可以结合。我们希望把这个过程变为主动的、系统化的、可复用的。</p>
+          <p>工具的核心设计理念有三点。第一，把完整的科研流程拆解成可复用的 Skills 卡片，每个卡片是一个经过精心设计的结构化 Prompt。第二，提供一个可视化的画布编辑器，让用户可以像搭积木一样拼接研究方案。第三，支持一键运行整个流程，实现从文献检索到论文写作的端到端自动化。</p>
+          <p>我们不做 AI 本身，我们做 AI 和科研之间的连接器。</p>
         </div>
       </section>
     </div>
@@ -202,54 +265,67 @@
           <h3 id="playMethodTitle" data-i18n="choosePlayTitle">请选择你的玩法</h3>
           <button id="playMethodCloseBtn" class="modal-close-btn" type="button" aria-label="Close">&times;</button>
         </div>
-        <div class="play-method-grid">
-          <!-- Row 1: 5 methods ordered by proportion -->
-          <button class="play-method-card" data-method="cross-domain" type="button">
-            <span class="play-method-icon">🧬</span>
-            <span class="play-method-name" data-i18n="pmCrossDomain">A+B 方法迁移</span>
-            <span class="play-method-desc" data-i18n="pmCrossDomainDesc">从两篇跨领域论文中提取方法，交叉融合生成新 Idea</span>
-          </button>
-          <button class="play-method-card" data-method="efficiency" type="button">
-            <span class="play-method-icon">⚡</span>
-            <span class="play-method-name" data-i18n="pmEfficiency">效率优化</span>
-            <span class="play-method-desc" data-i18n="pmEfficiencyDesc">不求最强，求更快、更便宜、更省</span>
-          </button>
-          <button class="play-method-card" data-method="workflow" type="button">
-            <span class="play-method-icon">⚙️</span>
-            <span class="play-method-name" data-i18n="pmWorkflow">Workflow 设计</span>
-            <span class="play-method-desc" data-i18n="pmWorkflowDesc">设计多步骤工作流，不换模型换流程</span>
-          </button>
-          <button class="play-method-card" data-method="robustness" type="button">
-            <span class="play-method-icon">🛡️</span>
-            <span class="play-method-name" data-i18n="pmRobustness">鲁棒性研究</span>
-            <span class="play-method-desc" data-i18n="pmRobustnessDesc">让模型更安全、更抗攻击、更公平</span>
-          </button>
-          <button class="play-method-card" data-method="theory" type="button">
-            <span class="play-method-icon">🔬</span>
-            <span class="play-method-name" data-i18n="pmTheory">设计空间分析</span>
-            <span class="play-method-desc" data-i18n="pmTheoryDesc">解释为什么有效，系统分析设计空间</span>
-          </button>
-          <!-- Row 2: 4 methods ordered by proportion -->
-          <button class="play-method-card" data-method="new-benchmark" type="button">
-            <span class="play-method-icon">📏</span>
-            <span class="play-method-name" data-i18n="pmNewBenchmark">Benchmark 构建</span>
-            <span class="play-method-desc" data-i18n="pmNewBenchmarkDesc">定义新任务、构造测试集、设计评测维度</span>
-          </button>
-          <button class="play-method-card" data-method="system" type="button">
-            <span class="play-method-icon">🏗️</span>
-            <span class="play-method-name" data-i18n="pmSystem">系统论文</span>
-            <span class="play-method-desc" data-i18n="pmSystemDesc">端到端框架，多组件协同，工程可复用</span>
-          </button>
-          <button class="play-method-card" data-method="dataset" type="button">
-            <span class="play-method-icon">📊</span>
-            <span class="play-method-name" data-i18n="pmDataset">数据集构建</span>
-            <span class="play-method-desc" data-i18n="pmDatasetDesc">构造大规模/高质量/新领域数据集</span>
-          </button>
-          <button class="play-method-card" data-method="metric" type="button">
-            <span class="play-method-icon">📐</span>
-            <span class="play-method-name" data-i18n="pmMetric">评估指标设计</span>
-            <span class="play-method-desc" data-i18n="pmMetricDesc">让"怎么判断好坏"更可靠</span>
-          </button>
+        <div class="play-method-split">
+          <!-- Left: System play methods -->
+          <div class="play-method-col">
+            <div class="play-method-col-title" data-i18n="systemPlayMethods">系统玩法</div>
+            <div class="play-method-scroll">
+              <div class="play-method-grid">
+                <button class="play-method-card" data-method="cross-domain" type="button">
+                  <span class="play-method-circle">🧬</span>
+                  <span class="play-method-name" data-i18n="pmCrossDomain">A+B 方法迁移</span>
+                </button>
+                <button class="play-method-card" data-method="efficiency" type="button">
+                  <span class="play-method-circle">⚡</span>
+                  <span class="play-method-name" data-i18n="pmEfficiency">效率优化</span>
+                </button>
+                <button class="play-method-card" data-method="workflow" type="button">
+                  <span class="play-method-circle">⚙️</span>
+                  <span class="play-method-name" data-i18n="pmWorkflow">Workflow 设计</span>
+                </button>
+                <button class="play-method-card" data-method="robustness" type="button">
+                  <span class="play-method-circle">🛡️</span>
+                  <span class="play-method-name" data-i18n="pmRobustness">鲁棒性研究</span>
+                </button>
+                <button class="play-method-card" data-method="theory" type="button">
+                  <span class="play-method-circle">🔬</span>
+                  <span class="play-method-name" data-i18n="pmTheory">设计空间分析</span>
+                </button>
+                <button class="play-method-card" data-method="new-benchmark" type="button">
+                  <span class="play-method-circle">📏</span>
+                  <span class="play-method-name" data-i18n="pmNewBenchmark">Benchmark 构建</span>
+                </button>
+                <button class="play-method-card" data-method="system" type="button">
+                  <span class="play-method-circle">🏗️</span>
+                  <span class="play-method-name" data-i18n="pmSystem">系统论文</span>
+                </button>
+                <button class="play-method-card" data-method="dataset" type="button">
+                  <span class="play-method-circle">📊</span>
+                  <span class="play-method-name" data-i18n="pmDataset">数据集构建</span>
+                </button>
+                <button class="play-method-card" data-method="metric" type="button">
+                  <span class="play-method-circle">📐</span>
+                  <span class="play-method-name" data-i18n="pmMetric">评估指标设计</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Divider -->
+          <div class="play-method-divider"></div>
+          <!-- Right: Custom play methods -->
+          <div class="play-method-col">
+            <div class="play-method-col-title" data-i18n="customPlayMethods">我的玩法</div>
+            <div class="play-method-scroll">
+              <div class="play-method-grid" id="customMethodsGrid">
+                <button id="saveAsPlayMethodBtn" class="play-method-card play-method-add" type="button">
+                  <span class="play-method-circle play-method-add-circle">
+                    <svg viewBox="0 0 24 24" width="28" height="28"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
+                  </span>
+                  <span class="play-method-name" data-i18n="saveAsPlayMethod">保存为玩法</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -259,14 +335,14 @@
       <div id="aiWandMask" class="modal-mask"></div>
       <section class="modal-panel" style="max-width:500px">
         <div class="play-method-header">
-          <h3 id="aiWandTitle" data-i18n="genCanvasTitle">AI 生成画布</h3>
+          <h3 id="aiWandTitle" data-i18n="genCanvasTitle">AI 布局</h3>
           <button id="aiWandCloseBtn" class="modal-close-btn" type="button" aria-label="Close">&times;</button>
         </div>
         <textarea id="aiWandInput" class="play-method-custom-input" data-i18n-placeholder="genCanvasPlaceholder" placeholder="描述你想要的画布，例如：我想从多个不同领域的论文中各取一个模块，拼成一个新方法..." style="min-height:80px;margin:12px 0"></textarea>
         <div class="play-method-custom-actions">
           <button id="aiWandGenerateBtn" class="create-btn ai-gen-btn" type="button">
             <svg viewBox="0 0 24 24"><path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7l2.5-1.4zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2zM14.37 7.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.72 11.05a.996.996 0 0 0 0-1.41l-2.35-2.35zm-1.06 1.06l2.35 2.35-1.06 1.06-2.35-2.35 1.06-1.06z"/></svg>
-            <span data-i18n="genCanvasBtn">生成画布</span>
+            <span data-i18n="genCanvasBtn">开始布局</span>
           </button>
         </div>
         <div id="aiWandStatus" class="play-method-gen-status" style="margin-top:8px;min-height:20px"></div>
@@ -381,6 +457,8 @@
       <button id="scrollTopBtn" class="floating-btn" type="button" data-i18n-tooltip="backToTop" title="回到顶部">↑</button>
     </div>
 
+    <script src="./changelog.js"></script>
+    <script src="./config.local.js"></script>
     <script src="./app.js"></script>
     <script src="./canvas.js"></script>
   </body>

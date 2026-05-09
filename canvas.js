@@ -84,7 +84,7 @@ const CanvasApp = (() => {
 
   // ── Init ──
 
-  function init(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard) {
+  function init(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard, onDeleteCard, onMoveCardToStage) {
     if (!canvasEl) return;
     const firstInit = !inited;
     if (!inited) {
@@ -103,7 +103,7 @@ const CanvasApp = (() => {
       inited = true;
     }
     ensureStartEndNodes();
-    buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard);
+    buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard, onDeleteCard, onMoveCardToStage);
     render();
   }
 
@@ -223,6 +223,12 @@ const CanvasApp = (() => {
       bulb.className = "cnode-bulb";
       bulb.innerHTML = `<svg viewBox="0 0 24 24" class="bulb-svg"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg>`;
       el.appendChild(bulb);
+
+      // Status text (next to bulb, shown when _statusText is set)
+      const statusText = document.createElement("span");
+      statusText.className = "cnode-bulb-status" + (n._statusText ? " visible" : "");
+      statusText.textContent = n._statusText || "";
+      el.appendChild(statusText);
 
       // Play button (top-right corner)
       const playBtn = document.createElement("button");
@@ -828,6 +834,15 @@ const CanvasApp = (() => {
       dragState = null;
       return;
     }
+    const fromNode = nodes.find((n) => n.id === d.fromId);
+    const toNode = nodes.find((n) => n.id === toId);
+    const fromLevel = fromNode?.level;
+    const toLevel = toNode?.level;
+    if (typeof fromLevel === "number" && typeof toLevel === "number" && toLevel - fromLevel !== 1) {
+      alert("不允许跨层连线");
+      dragState = null;
+      return;
+    }
     const edge = { id: "e" + nextId++, from: d.fromId, fromSide: d.fromSide, to: toId, toSide };
     saveUndo();
     edges.push(edge);
@@ -970,6 +985,19 @@ const CanvasApp = (() => {
     }
 
     if (targetNode) {
+      let fromId = d.end === "from" ? targetNode.id : edge.from;
+      let toId = d.end === "to" ? targetNode.id : edge.to;
+      const fromNode = nodes.find((n) => n.id === fromId);
+      const toNode = nodes.find((n) => n.id === toId);
+      const fromLevel = fromNode?.level;
+      const toLevel = toNode?.level;
+      if (typeof fromLevel === "number" && typeof toLevel === "number" && toLevel - fromLevel !== 1) {
+        alert("不允许跨层连线");
+        write();
+        refreshEdges();
+        dragState = null;
+        return;
+      }
       saveUndo();
       if (d.end === "from" && targetNode.id !== edge.to) {
         if (!edges.some((ed) => ed.id !== d.edgeId && ed.from === targetNode.id && ed.to === edge.to)) {
@@ -1003,16 +1031,21 @@ const CanvasApp = (() => {
     if (!drawerRoot) return;
     drawerRoot.addEventListener("mousedown", (e) => {
       if (e.target.closest(".cdrawer-item-edit")) return;
+      if (e.target.closest(".cdrawer-item-del")) return;
+      if (e.target.closest(".cdrawer-item-actions")) return;
       if (e.target.closest("[contenteditable='true']")) return;
       const item = e.target.closest(".cdrawer-item");
       if (!item) return;
       e.preventDefault();
       const cardId = item.dataset.cardId;
+      const parentStage = item.closest(".cdrawer-group[data-stage-id]");
+      const fromStageId = parentStage ? parentStage.dataset.stageId : null;
       const ghost = item.cloneNode(true);
       ghost.className = "cdrawer-ghost";
       ghost.style.cssText = `position:fixed;left:${e.clientX - 60}px;top:${e.clientY - 16}px;pointer-events:none;z-index:9999;`;
       document.body.appendChild(ghost);
-      drawerDrag = { cardId, ghost, overCanvas: false, moved: false, startX: e.clientX, startY: e.clientY };
+      item.style.display = "none";
+      drawerDrag = { cardId, fromStageId, ghost, item, overCanvas: false, overStageId: null, moved: false, startX: e.clientX, startY: e.clientY };
     });
   }
 
@@ -1027,13 +1060,38 @@ const CanvasApp = (() => {
     const rect = canvasEl.getBoundingClientRect();
     d.overCanvas = e.clientX >= rect.left && e.clientX <= rect.right &&
                    e.clientY >= rect.top && e.clientY <= rect.bottom;
+
+    // Detect which stage the mouse is over by checking bounding rects
+    d.overStageId = null;
+    const stages = drawerRoot.querySelectorAll(".cdrawer-group[data-stage-id]");
+    for (const stageEl of stages) {
+      const r = stageEl.getBoundingClientRect();
+      if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+        d.overStageId = stageEl.dataset.stageId;
+        break;
+      }
+    }
+
+    // Visual feedback: highlight target stage
+    drawerRoot.querySelectorAll(".cdrawer-drop-over").forEach((s) => s.classList.remove("cdrawer-drop-over"));
+    if (d.overStageId && d.overStageId !== d.fromStageId) {
+      const targetEl = drawerRoot.querySelector(`.cdrawer-group[data-stage-id="${d.overStageId}"]`);
+      if (targetEl) targetEl.classList.add("cdrawer-drop-over");
+    }
   }
 
   function drawerDragEnd(e) {
     const d = drawerDrag;
     if (!d) return;
     d.ghost.remove();
-    if (d.moved && d.overCanvas) {
+    d.item.style.display = "";
+    // Clear highlight
+    drawerRoot.querySelectorAll(".cdrawer-drop-over").forEach((s) => s.classList.remove("cdrawer-drop-over"));
+
+    if (d.moved && d.overStageId && d.overStageId !== d.fromStageId && drawerMoveCardToStageCallback) {
+      // Card dropped on a different stage in the drawer → move it
+      drawerMoveCardToStageCallback(d.cardId, d.overStageId);
+    } else if (d.moved && d.overCanvas) {
       const rect = canvasEl.getBoundingClientRect();
       const x = e.clientX - rect.left + canvasEl.scrollLeft - 90;
       const y = e.clientY - rect.top + canvasEl.scrollTop - 32;
@@ -1246,10 +1304,14 @@ const CanvasApp = (() => {
   // ── Start / End Nodes ──
 
   function ensureStartEndNodes() {
-    const hasStart = nodes.some((n) => n.cardId === "__start__");
+    let startNode = nodes.find((n) => n.cardId === "__start__");
 
-    if (!hasStart) {
+    if (!startNode) {
       nodes.push({ id: "n" + nextId++, cardId: "__start__", x: 16, y: 16, subtitle: "" });
+    } else {
+      // Always reset start node to top-left corner on init
+      startNode.x = 16;
+      startNode.y = 16;
     }
 
     // Remove any legacy end nodes and edges to them
@@ -1297,8 +1359,10 @@ const CanvasApp = (() => {
   let drawerEmptyTrashCallback = null;
   let drawerRenameStageCallback = null;
   let drawerRenameCardCallback = null;
+  let drawerDeleteCardCallback = null;
+  let drawerMoveCardToStageCallback = null;
 
-  function buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard) {
+  function buildDrawer(cardsByCategory, onReorder, onAddCard, onAddStage, onDeleteStage, trashData, onRestoreStage, onEmptyTrash, onRenameStage, onRenameCard, onDeleteCard, onMoveCardToStage) {
     if (!drawerRoot) return;
     // Save which stages are open
     const openStages = new Set();
@@ -1318,6 +1382,29 @@ const CanvasApp = (() => {
     drawerEmptyTrashCallback = onEmptyTrash || null;
     drawerRenameStageCallback = onRenameStage || null;
     drawerRenameCardCallback = onRenameCard || null;
+    drawerDeleteCardCallback = onDeleteCard || null;
+    drawerMoveCardToStageCallback = onMoveCardToStage || null;
+
+    // Toggle all stages button
+    const toggleAllBtn = document.createElement("button");
+    toggleAllBtn.className = "cdrawer-toggle-all";
+    toggleAllBtn.type = "button";
+    // VS Code style: collapse = lines fold in, expand = lines spread out
+    const collapseIcon = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M1 3h14M3 7h10M5 11h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>';
+    const expandIcon = '<svg viewBox="0 0 16 16" width="16" height="16"><path d="M1 3h14M1 7h14M1 11h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>';
+    function updateToggleAllBtn() {
+      const details = drawerRoot.querySelectorAll("details.cdrawer-group");
+      const anyOpen = [...details].some((d) => d.open);
+      toggleAllBtn.innerHTML = anyOpen ? collapseIcon : expandIcon;
+      toggleAllBtn.title = anyOpen ? t("collapseAll") : t("expandAll");
+    }
+    toggleAllBtn.addEventListener("click", () => {
+      const details = drawerRoot.querySelectorAll("details.cdrawer-group");
+      const anyOpen = [...details].some((d) => d.open);
+      details.forEach((d) => { d.open = !anyOpen; });
+      updateToggleAllBtn();
+    });
+    drawerRoot.appendChild(toggleAllBtn);
 
     for (const group of cardsByCategory) {
       const cat = group.name;
@@ -1326,7 +1413,7 @@ const CanvasApp = (() => {
 
       const det = document.createElement("details");
       det.className = "cdrawer-group" + (stageId ? " cdrawer-custom" : "");
-      if (stageId) det.dataset.stageId = stageId;
+      det.dataset.stageId = stageId || ("builtin:" + cat);
 
       const sum = document.createElement("summary");
       sum.className = "cdrawer-summary";
@@ -1425,6 +1512,8 @@ const CanvasApp = (() => {
         });
       }
 
+      det.addEventListener("toggle", updateToggleAllBtn);
+
       cards.forEach((card) => {
         const item = document.createElement("div");
         item.className = "cdrawer-item";
@@ -1434,11 +1523,15 @@ const CanvasApp = (() => {
         nameSpan.textContent = translatedTitle;
         item.appendChild(nameSpan);
 
-        // Pencil button to rename card (custom stages only)
+        // Edit + Delete buttons (custom stages only)
         if (stageId) {
+          const actions = document.createElement("div");
+          actions.className = "cdrawer-item-actions";
+
           const editBtn = document.createElement("button");
           editBtn.className = "cdrawer-item-edit";
           editBtn.type = "button";
+          editBtn.title = t("rename");
           editBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/></svg>';
           editBtn.addEventListener("click", (e) => {
             e.preventDefault();
@@ -1464,7 +1557,20 @@ const CanvasApp = (() => {
             if (ev.key === "Enter") { ev.preventDefault(); nameSpan.blur(); }
             if (ev.key === "Escape") { nameSpan.textContent = translatedTitle; nameSpan.blur(); }
           });
-          item.appendChild(editBtn);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "cdrawer-item-del";
+          delBtn.type = "button";
+          delBtn.textContent = "×";
+          delBtn.title = t("delete");
+          delBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (drawerDeleteCardCallback) drawerDeleteCardCallback(card.id);
+          });
+
+          actions.append(editBtn, delBtn);
+          item.appendChild(actions);
         }
 
         det.appendChild(item);
@@ -1512,6 +1618,9 @@ const CanvasApp = (() => {
       trashData.forEach((entry) => {
         const row = document.createElement("div");
         row.className = "cdrawer-trash-item";
+        const icon = document.createElement("span");
+        icon.className = "cdrawer-trash-icon";
+        icon.textContent = entry.type === "card" ? "🃏" : "📁";
         const nameSpan = document.createElement("span");
         nameSpan.textContent = entry.name + (entry.cardCount > 0 ? ` (${entry.cardCount})` : "");
         const restoreBtn = document.createElement("button");
@@ -1521,22 +1630,51 @@ const CanvasApp = (() => {
         restoreBtn.addEventListener("click", (e) => {
           e.preventDefault();
           e.stopPropagation();
-          if (drawerRestoreStageCallback) drawerRestoreStageCallback(entry.trashIndex);
+          if (drawerRestoreStageCallback) drawerRestoreStageCallback(entry.type || "stage", entry.trashIndex);
         });
-        row.append(nameSpan, restoreBtn);
+        row.append(icon, nameSpan, restoreBtn);
         trashDet.appendChild(row);
       });
 
+      trashDet.addEventListener("toggle", updateToggleAllBtn);
       drawerRoot.appendChild(trashDet);
     }
+
+    updateToggleAllBtn();
   }
 
   // ── AllItems map (set from outside) ──
 
   let allItemsMap = new Map();
+  let titleAliasMap = new Map(); // translated title → original title
 
   function setAllItems(items) {
     allItemsMap = new Map(items.map((i) => [i.id, i]));
+  }
+
+  function setTitleMap(map) {
+    titleAliasMap = new Map();
+    if (map) {
+      for (const [key, val] of Object.entries(map)) {
+        titleAliasMap.set(key, val);   // zh → en
+        titleAliasMap.set(val, key);   // en → zh
+      }
+    }
+  }
+
+  // Build title→id map with alias fallback
+  function buildTitleToId() {
+    const m = new Map();
+    allItemsMap.forEach((card, id) => {
+      if (card && card.title) m.set(card.title, id);
+    });
+    // Add alias entries: if "Write Abstract" maps to id X, also map "撰写 Abstract" → X
+    for (const [alias, original] of titleAliasMap) {
+      if (!m.has(alias) && m.has(original)) {
+        m.set(alias, m.get(original));
+      }
+    }
+    return m;
   }
 
   // ── Node API call ──
@@ -1762,9 +1900,13 @@ const CanvasApp = (() => {
     const sampleEl = nodesEl ? nodesEl.querySelector(".cnode:not(.cnode-start)") : null;
     const NODE_W = sampleEl ? sampleEl.offsetWidth : 260;
     const NODE_H = sampleEl ? sampleEl.offsetHeight : 180;
-    const GAP_X = 60;
-    const GAP_Y = 100;
-    const START_Y = CANVAS_PAD + 30;
+    const GAP_X = 50;
+    const GAP_Y = 30;
+
+    const baseX = startNode ? startNode.x : 16;
+    const baseY = startNode ? startNode.y : 16;
+    const startH = 56;
+    const startGap = GAP_Y;
 
     const levels = new Map();
     pipelineNodes.forEach(({ node, step }) => {
@@ -1774,26 +1916,19 @@ const CanvasApp = (() => {
     });
 
     const sortedLevels = [...levels.keys()].sort((a, b) => a - b);
-    const maxW = sortedLevels.length > 0
-      ? Math.max(...sortedLevels.map(lv => levels.get(lv).length * NODE_W + (levels.get(lv).length - 1) * GAP_X))
-      : NODE_W;
 
     sortedLevels.forEach((lv, i) => {
       const row = levels.get(lv);
-      const rowW = row.length * NODE_W + (row.length - 1) * GAP_X;
-      const startX = CANVAS_PAD + (maxW - rowW) / 2;
+      const y = baseY + startH + startGap + i * (NODE_H + GAP_Y);
       row.forEach((n, col) => {
-        n.x = startX + col * (NODE_W + GAP_X);
-        n.y = START_Y + i * (NODE_H + GAP_Y);
+        n.x = baseX + col * (NODE_W + GAP_X);
+        n.y = y;
       });
     });
 
-    const centerX = CANVAS_PAD + maxW / 2;
-    const SE_W = 56;
-    const SE_H = 56;
     if (startNode) {
-      startNode.x = centerX - SE_W / 2;
-      startNode.y = START_Y - GAP_Y - SE_H;
+      startNode.x = 16;
+      startNode.y = 16;
     }
   }
 
@@ -1815,21 +1950,34 @@ const CanvasApp = (() => {
             }
           }
           if (parentId && parentId !== nodeId) {
-            edges.push({ id: "e" + nextId++, from: parentId, fromSide: "bottom", to: nodeId, toSide: "top" });
+            const parentNode = nodes.find((n) => n.id === parentId);
+            const childNode = nodes.find((n) => n.id === nodeId);
+            const parentLevel = parentNode?.level;
+            const childLevel = childNode?.level;
+            if (typeof parentLevel === "number" && typeof childLevel === "number" && childLevel - parentLevel !== 1) {
+              console.log(`[buildPipelineEdges] Skip cross-layer edge: ${parentId}→${nodeId} (levels ${parentLevel}→${childLevel})`);
+            } else {
+              edges.push({ id: "e" + nextId++, from: parentId, fromSide: "bottom", to: nodeId, toSide: "top" });
+            }
           }
         });
       } else if (i > 0) {
-        edges.push({ id: "e" + nextId++, from: nodeMap[i - 1], fromSide: "bottom", to: nodeId, toSide: "top" });
+        const parentNode = nodes.find((n) => n.id === nodeMap[i - 1]);
+        const childNode = nodes.find((n) => n.id === nodeId);
+        const parentLevel = parentNode?.level;
+        const childLevel = childNode?.level;
+        if (typeof parentLevel === "number" && typeof childLevel === "number" && childLevel - parentLevel !== 1) {
+          console.log(`[buildPipelineEdges] Skip cross-layer default edge: ${nodeMap[i - 1]}→${nodeId} (levels ${parentLevel}→${childLevel})`);
+        } else {
+          edges.push({ id: "e" + nextId++, from: nodeMap[i - 1], fromSide: "bottom", to: nodeId, toSide: "top" });
+        }
       }
     });
   }
 
   function addPipeline(pipeline) {
     saveUndo();
-    const titleToId = new Map();
-    allItemsMap.forEach((card, id) => {
-      if (card && card.title) titleToId.set(card.title, id);
-    });
+    const titleToId = buildTitleToId();
 
     // Reuse existing start/end nodes (created by clear → ensureStartEndNodes)
     let startNode = nodes.find((n) => n.cardId === "__start__");
@@ -1842,7 +1990,7 @@ const CanvasApp = (() => {
 
     pipeline.forEach((step, i) => {
       const cardId = titleToId.get(step.title) || step.title;
-      const node = { id: "n" + nextId++, cardId, x: 0, y: 0, subtitle: step.label };
+      const node = { id: "n" + nextId++, cardId, x: 0, y: 0, subtitle: step.label, level: step.level ?? null };
       nodes.push(node);
       nodesEl.appendChild(buildNodeEl(node));
       pipelineNodes.push({ node, step });
@@ -1904,10 +2052,7 @@ const CanvasApp = (() => {
   }
 
   function addPipelineAnimated(pipeline, onDone) {
-    const titleToId = new Map();
-    allItemsMap.forEach((card, id) => {
-      if (card && card.title) titleToId.set(card.title, id);
-    });
+    const titleToId = buildTitleToId();
 
     // Reuse existing start/end nodes
     let startNode = nodes.find((n) => n.cardId === "__start__");
@@ -1920,7 +2065,7 @@ const CanvasApp = (() => {
     const pipelineNodes = [];
     pipeline.forEach((step, i) => {
       const cardId = titleToId.get(step.title) || step.title;
-      const node = { id: "n" + nextId++, cardId, x: 0, y: 0, subtitle: step.label };
+      const node = { id: "n" + nextId++, cardId, x: 0, y: 0, subtitle: step.label, level: step.level ?? null };
       nodes.push(node);
       nodeMap.push(node.id);
       pipelineNodes.push({ node, step });
@@ -1928,6 +2073,7 @@ const CanvasApp = (() => {
 
     // Build edges
     const animEdges = [];
+    const edgeLog = [];
     pipeline.forEach((step, i) => {
       const nodeId = nodeMap[i];
       if (!nodeId) return;
@@ -1935,13 +2081,33 @@ const CanvasApp = (() => {
         step.dependsOn.forEach((ref) => {
           let parentId = typeof ref === "number" ? nodeMap[ref] : null;
           if (parentId && parentId !== nodeId) {
-            animEdges.push({ id: "e" + nextId++, from: parentId, fromSide: "bottom", to: nodeId, toSide: "top" });
+            const parentNode = nodes.find((n) => n.id === parentId);
+            const childNode = nodes.find((n) => n.id === nodeId);
+            const parentLevel = parentNode?.level;
+            const childLevel = childNode?.level;
+            if (typeof parentLevel === "number" && typeof childLevel === "number" && childLevel - parentLevel !== 1) {
+              console.log(`[addPipelineAnimated] Skip cross-layer edge: ${parentId}→${nodeId} (levels ${parentLevel}→${childLevel})`);
+            } else {
+              animEdges.push({ id: "e" + nextId++, from: parentId, fromSide: "bottom", to: nodeId, toSide: "top" });
+              edgeLog.push(`${ref}→${i}`);
+            }
           }
         });
       } else if (i > 0) {
-        animEdges.push({ id: "e" + nextId++, from: nodeMap[i - 1], fromSide: "bottom", to: nodeId, toSide: "top" });
+        const parentNode = nodes.find((n) => n.id === nodeMap[i - 1]);
+        const childNode = nodes.find((n) => n.id === nodeId);
+        const parentLevel = parentNode?.level;
+        const childLevel = childNode?.level;
+        if (typeof parentLevel === "number" && typeof childLevel === "number" && childLevel - parentLevel !== 1) {
+          console.log(`[addPipelineAnimated] Skip cross-layer default edge: ${nodeMap[i - 1]}→${nodeId} (levels ${parentLevel}→${childLevel})`);
+        } else {
+          animEdges.push({ id: "e" + nextId++, from: nodeMap[i - 1], fromSide: "bottom", to: nodeId, toSide: "top" });
+          edgeLog.push(`${i - 1}→${i}(default)`);
+        }
       }
     });
+    console.log("[addPipelineAnimated] Edges:", edgeLog.join(", "), "animEdges count:", animEdges.length);
+    console.log("[addPipelineAnimated] animEdges:", animEdges.map(e => `${e.from}->${e.to}`).join(", "));
 
     // Connect start to root nodes
     if (startNode) {
@@ -1991,7 +2157,7 @@ const CanvasApp = (() => {
 
     layoutPipeline(pipelineNodes, titleToId, startNode);
 
-    // Animation order: start node, then pipeline nodes by level, then end node
+    // Build animation sequence: edge→node pairs, grouped by level
     const levelGroups = new Map();
     pipelineNodes.forEach(({ node, step }, i) => {
       const lv = step.level;
@@ -1999,45 +2165,93 @@ const CanvasApp = (() => {
       levelGroups.get(lv).push(i);
     });
     const sortedLevels = [...levelGroups.keys()].sort((a, b) => a - b);
-    const animOrder = sortedLevels.flatMap(lv => levelGroups.get(lv));
+
+    // animSteps: each is { type: "node", nodeIdx, title, level } or { type: "edge", edge }
+    const animSteps = [];
+    for (const lv of sortedLevels) {
+      for (const nodeIdx of levelGroups.get(lv)) {
+        const node = pipelineNodes[nodeIdx].node;
+        // Find edges that point to this node and whose source is already shown
+        const incomingEdges = animEdges.filter((e) => e.to === node.id);
+        for (const edge of incomingEdges) {
+          animSteps.push({ type: "edge", edge });
+        }
+        const rawTitle = allItemsMap.get(node.cardId) ? allItemsMap.get(node.cardId).title : node.cardId;
+        const title = typeof translateCardTitle === "function" ? translateCardTitle(rawTitle) : rawTitle;
+        animSteps.push({ type: "node", nodeIdx, title, level: lv });
+      }
+    }
 
     // Save full state immediately
     write();
 
-    // Animate: start → pipeline nodes by level → end
+    // Animation: show start → then edge/node pairs one by one
     const shownNodes = new Set();
-    let idx = -1; // -1 = start node
+    let stepIdx = -1; // -1 = start node
+    const totalLevels = sortedLevels.length;
+    let lastLevel = -1;
+
     function showNext() {
-      if (idx === -1) {
+      // Phase 0: show start node
+      if (stepIdx === -1) {
         nodesEl.appendChild(buildNodeEl(startNode));
         shownNodes.add(startNode.id);
         resizeCanvas();
-        idx++;
-        setTimeout(showNext, 200);
+        stepIdx++;
+        setTimeout(showNext, 300);
         return;
       }
-      if (idx >= animOrder.length) {
+
+      // Phase done
+      if (stepIdx >= animSteps.length) {
+        // Finalize: add all remaining edges and render
         animEdges.forEach((e) => edges.push(e));
         resizeCanvas();
         render();
+        setBulbStatus("");
         if (onDone) onDone();
         return;
       }
-      const origIdx = animOrder[idx];
-      const node = pipelineNodes[origIdx].node;
-      nodesEl.appendChild(buildNodeEl(node));
-      shownNodes.add(node.id);
 
-      animEdges.forEach((e) => {
-        if (shownNodes.has(e.from) && shownNodes.has(e.to)) {
-          const existing = arrowsEl.querySelector(`[data-edge-id="${e.id}"]`);
-          if (!existing) arrowsEl.appendChild(buildEdgeEl(e));
+      const step = animSteps[stepIdx];
+
+      if (step.type === "edge") {
+        // Show edge
+        const existing = arrowsEl.querySelector(`[data-edge-id="${step.edge.id}"]`);
+        if (!existing) arrowsEl.appendChild(buildEdgeEl(step.edge));
+        resizeCanvas();
+        stepIdx++;
+        setTimeout(showNext, 250);
+      } else {
+        // Show node
+        const node = pipelineNodes[step.nodeIdx].node;
+        nodesEl.appendChild(buildNodeEl(node));
+        shownNodes.add(node.id);
+
+        // Show any edges that now have both endpoints visible
+        animEdges.forEach((e) => {
+          if (shownNodes.has(e.from) && shownNodes.has(e.to)) {
+            const existing = arrowsEl.querySelector(`[data-edge-id="${e.id}"]`);
+            if (!existing) arrowsEl.appendChild(buildEdgeEl(e));
+          }
+        });
+
+        // Update status text
+        if (step.level !== lastLevel) {
+          lastLevel = step.level;
+          const layerLabel = totalLevels > 1 ? ` — ${step.level + 1}/${totalLevels}` : "";
+          setBulbStatus(`${step.title}${layerLabel}`);
+        } else {
+          setBulbStatus(step.title);
         }
-      });
 
-      resizeCanvas();
-      idx++;
-      setTimeout(showNext, 350);
+        resizeCanvas();
+        stepIdx++;
+        // Longer pause between layers
+        const nextStep = animSteps[stepIdx];
+        const delay = (nextStep && nextStep.type === "node" && nextStep.level !== step.level) ? 800 : 400;
+        setTimeout(showNext, delay);
+      }
     }
     showNext();
   }
@@ -2089,6 +2303,23 @@ const CanvasApp = (() => {
     if (el) { el.classList.remove("bulb-lit"); el.classList.add("bulb-pulsing"); }
   }
 
+  function setBulbStatus(text) {
+    const startNode = nodes.find((n) => n.cardId === "__start__");
+    if (!startNode) return;
+    startNode._statusText = text;
+    // Find status element directly in the DOM
+    const statusEl = document.querySelector(".cnode-bulb-status");
+    console.log("[setBulbStatus]", text, "found el:", !!statusEl);
+    if (statusEl) {
+      statusEl.textContent = text || "";
+      if (text) {
+        statusEl.classList.add("visible");
+      } else {
+        statusEl.classList.remove("visible");
+      }
+    }
+  }
+
   function setEdgeClass(edgeId, cls) {
     if (!arrowsEl) return;
     arrowsEl.querySelectorAll(`[data-edge-id="${edgeId}"] .cedge`).forEach((p) => {
@@ -2104,5 +2335,5 @@ const CanvasApp = (() => {
     });
   }
 
-  return { init, addNode, clear, setAllItems, autoLayout, addPipeline, addPipelineAnimated, getState, loadState, getNodeById, updateNodeOutput, render, lightBulb, dimBulb, pulseBulb, setEdgeClass, clearEdgeClasses };
+  return { init, addNode, clear, setAllItems, setTitleMap, autoLayout, addPipeline, addPipelineAnimated, getState, loadState, getNodeById, updateNodeOutput, render, lightBulb, dimBulb, pulseBulb, setBulbStatus, setEdgeClass, clearEdgeClasses };
 })();
